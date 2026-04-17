@@ -34,6 +34,7 @@ import org.linphone.ui.GenericViewModel
 import org.linphone.ui.main.model.AccountModel
 import org.linphone.ui.main.model.ShortcutModel
 import org.linphone.utils.Event
+import org.linphone.utils.LinphoneUtils.Companion.isPushOnly
 
 class DrawerMenuViewModel
     @UiThread
@@ -185,6 +186,7 @@ class DrawerMenuViewModel
 
         val list = arrayListOf<AccountModel>()
         for (account in coreContext.core.accountList) {
+            if (account.isPushOnly()) continue
             val model = AccountModel(account) { view, account ->
                 // onClicked
                 showAccountPopupMenuEvent.postValue(Event(Pair(view, account)))

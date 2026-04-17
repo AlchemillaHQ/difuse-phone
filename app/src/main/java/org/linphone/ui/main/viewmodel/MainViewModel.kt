@@ -47,6 +47,8 @@ import org.linphone.utils.AppUtils
 import org.linphone.utils.Event
 import org.linphone.utils.FileUtils
 import org.linphone.utils.LinphoneUtils
+import org.linphone.utils.LinphoneUtils.Companion.isPushOnly
+import org.linphone.utils.LinphoneUtils.Companion.visibleAccounts
 
 class MainViewModel
     @UiThread
@@ -194,7 +196,7 @@ class MainViewModel
         ) {
             Log.i("$TAG Message(s) received, updating notifications count if needed")
             val account = LinphoneUtils.getAccountForAddress(chatRoom.localAddress)
-            if (account != null && account != core.defaultAccount) {
+            if (account != null && !account.isPushOnly() && account != core.defaultAccount) {
                 computeNonDefaultAccountNotificationsCount()
             }
         }
@@ -202,7 +204,7 @@ class MainViewModel
         @WorkerThread
         override fun onMessageRetracted(core: Core, chatRoom: ChatRoom, message: ChatMessage) {
             val account = LinphoneUtils.getAccountForAddress(chatRoom.localAddress)
-            if (account != null && account != core.defaultAccount) {
+            if (account != null && !account.isPushOnly() && account != core.defaultAccount) {
                 computeNonDefaultAccountNotificationsCount()
             }
         }
@@ -223,6 +225,7 @@ class MainViewModel
             message: String
         ) {
             if (!monitorAccount) return
+            if (account.isPushOnly()) return
 
             when (state) {
                 RegistrationState.Failed -> {
@@ -253,7 +256,7 @@ class MainViewModel
                     } else {
                         // If no call and no account is in Failed state, hide top bar
                         val found = core.accountList.find {
-                            it.state == RegistrationState.Failed
+                            !it.isPushOnly() && it.state == RegistrationState.Failed
                         }
                         if (found == null) {
                             removeAlert(NON_DEFAULT_ACCOUNT_NOT_CONNECTED)
@@ -332,7 +335,7 @@ class MainViewModel
 
             computeNonDefaultAccountNotificationsCount()
 
-            if (core.accountList.isEmpty()) {
+            if (visibleAccounts().isEmpty()) {
                 Log.w("$TAG No more account configured, going into assistant")
                 lastAccountRemovedEvent.postValue(Event(true))
             }
@@ -364,7 +367,7 @@ class MainViewModel
         enableAccountMonitoring(true)
 
         coreContext.postOnCoreThread { core ->
-            accountsFound = core.accountList.size
+            accountsFound = visibleAccounts().size
 
             core.addListener(coreListener)
 
@@ -443,16 +446,17 @@ class MainViewModel
     fun updateAccountsAndNetworkReachability() {
         coreContext.postOnCoreThread { core ->
             val accounts = core.accountList
-            val count = accounts.size
-            if (count > accountsFound) {
+            val visibleAccounts = visibleAccounts()
+            if (visibleAccounts.size > accountsFound) {
                 Log.i("$TAG Newly added account detected!")
                 showNewAccountToastEvent.postValue(Event(true))
             }
-            accountsFound = count
+            accountsFound = visibleAccounts.size
 
             checkNetworkReachability()
 
             for (account in accounts) {
+                if (account.isPushOnly()) continue
                 if (account.state == RegistrationState.Failed) {
                     val identity = account.params.identityAddress?.asStringUriOnly().orEmpty()
                     Log.i("$TAG Account [$identity] registration state is failed, refreshing REGISTER")
@@ -549,6 +553,7 @@ class MainViewModel
     private fun computeNonDefaultAccountNotificationsCount() {
         var count = 0
         for (account in coreContext.core.accountList) {
+            if (account.isPushOnly()) continue
             if (account == coreContext.core.defaultAccount) continue
             count += account.unreadChatMessageCount + account.missedCallsCount
         }

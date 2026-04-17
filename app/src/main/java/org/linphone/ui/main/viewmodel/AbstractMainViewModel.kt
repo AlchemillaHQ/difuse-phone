@@ -36,6 +36,7 @@ import org.linphone.ui.GenericViewModel
 import org.linphone.ui.main.model.AccountModel
 import org.linphone.utils.Event
 import org.linphone.utils.LinphoneUtils
+import org.linphone.utils.LinphoneUtils.Companion.visibleAccounts
 
 open class AbstractMainViewModel
     @UiThread
@@ -155,12 +156,12 @@ open class AbstractMainViewModel
 
         @WorkerThread
         override fun onAccountAdded(core: Core, account: Account) {
-            moreThanOneAccount.postValue(core.accountList.size > 1)
+            moreThanOneAccount.postValue(visibleAccounts().size > 1)
         }
 
         @WorkerThread
         override fun onAccountRemoved(core: Core, account: Account) {
-            moreThanOneAccount.postValue(core.accountList.size > 1)
+            moreThanOneAccount.postValue(visibleAccounts().size > 1)
         }
 
         @WorkerThread
@@ -192,7 +193,7 @@ open class AbstractMainViewModel
         hideMeetings.value = !coreContext.defaultAccountHasVideoConferenceFactoryUri
 
         coreContext.postOnCoreThread { core ->
-            moreThanOneAccount.postValue(core.accountList.size > 1)
+            moreThanOneAccount.postValue(visibleAccounts().size > 1)
             core.addListener(coreListener)
             configure()
         }
@@ -289,7 +290,7 @@ open class AbstractMainViewModel
         val account = LinphoneUtils.getDefaultAccount()
         // Fetch all call logs if only one account to workaround no history issue
         // TODO FIXME: remove workaround later
-        val count = if (coreContext.core.accountList.size > 1) {
+        val count = if (visibleAccounts().size > 1) {
             account?.missedCallsCount ?: coreContext.core.missedCallsCount
         } else {
             coreContext.core.missedCallsCount
@@ -318,7 +319,7 @@ open class AbstractMainViewModel
             val account = LinphoneUtils.getDefaultAccount()
             // Fetch all call logs if only one account to workaround no history issue
             // TODO FIXME: remove workaround later
-            if (coreContext.core.accountList.size > 1) {
+            if (visibleAccounts().size > 1) {
                 account?.resetMissedCallsCount() ?: core.resetMissedCallsCount()
             } else {
                 core.resetMissedCallsCount()
@@ -344,15 +345,16 @@ open class AbstractMainViewModel
 
         val core = coreContext.core
         val defaultAccount = core.defaultAccount
-        if (defaultAccount != null || core.accountList.isNotEmpty()) {
+        val visibleAccounts = visibleAccounts()
+        if (defaultAccount != null || visibleAccounts.isNotEmpty()) {
             Log.i("$TAG Updating displayed default account")
             account.value?.destroy()
-            account.postValue(AccountModel(defaultAccount ?: core.accountList.first()))
+            account.postValue(AccountModel(defaultAccount ?: visibleAccounts.first()))
 
             computeUnreadMessagesCount()
             updateMissedCallsCount()
         } else {
-            Log.e("$TAG Accounts list no supposed to be empty!")
+            Log.e("$TAG No visible account available to display")
         }
     }
 }

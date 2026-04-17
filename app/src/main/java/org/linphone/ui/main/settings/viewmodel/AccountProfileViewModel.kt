@@ -35,6 +35,7 @@ import org.linphone.core.AccountManagerServicesRequestListenerStub
 import org.linphone.core.Address
 import org.linphone.core.DialPlan
 import org.linphone.core.Dictionary
+import org.linphone.core.DifuseApi
 import org.linphone.core.Factory
 import org.linphone.core.tools.Log
 import org.linphone.ui.GenericViewModel
@@ -42,12 +43,14 @@ import org.linphone.ui.main.model.AccountModel
 import org.linphone.ui.main.model.isEndToEndEncryptionMandatory
 import org.linphone.ui.main.settings.model.AccountDeviceModel
 import org.linphone.utils.Event
+import org.linphone.utils.LinphoneUtils.Companion.isPushOnly
 
 class AccountProfileViewModel
     @UiThread
     constructor() : GenericViewModel() {
     companion object {
         private const val TAG = "[Account Profile ViewModel]"
+        private const val DIFUSE_PAIR_ID_PARAM = "difuse_pair_id"
     }
 
     val accountModel = MutableLiveData<AccountModel>()
@@ -266,6 +269,33 @@ class AccountProfileViewModel
             if (::account.isInitialized) {
                 val identity = account.params.identityAddress?.asStringUriOnly()
                 Log.w("$TAG Removing account [$identity] and all related data (auth info, conferences, conversations, call logs)")
+
+                val pairId = account.params.getCustomParam(DIFUSE_PAIR_ID_PARAM)
+                if (pairId.isNotEmpty()) {
+                    val difuseDeviceId = corePreferences.difuseDeviceId
+                    if (difuseDeviceId.isNotEmpty()) {
+                        DifuseApi.unregisterDeviceAsync(difuseDeviceId)
+                        corePreferences.difuseDeviceId = ""
+                        corePreferences.difuseB2buaSipUri = ""
+                        corePreferences.difusePushToken = ""
+                        corePreferences.difuseUpstreamHost = ""
+                        corePreferences.difuseUpstreamUser = ""
+                        corePreferences.difuseUpstreamPassword = ""
+                        corePreferences.difuseUpstreamRealm = ""
+                        corePreferences.difuseUpstreamTransport = ""
+                        corePreferences.difuseUpstreamPort = 0
+                        corePreferences.difuseDisplayName = ""
+                    }
+
+                    val pairedPushAccounts = core.accountList.filter {
+                        it != account && it.isPushOnly() && it.params.getCustomParam(DIFUSE_PAIR_ID_PARAM) == pairId
+                    }
+                    for (paired in pairedPushAccounts) {
+                        Log.w("$TAG Also removing paired Difuse push-only account [${paired.params.identityAddress?.asStringUriOnly()}]")
+                        core.removeAccountWithData(paired)
+                    }
+                }
+
                 core.removeAccountWithData(account)
                 accountRemovedEvent.postValue(Event(true))
             }

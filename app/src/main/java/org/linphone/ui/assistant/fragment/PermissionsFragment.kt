@@ -38,6 +38,7 @@ import org.linphone.databinding.AssistantPermissionsFragmentBinding
 import org.linphone.ui.GenericFragment
 import org.linphone.ui.assistant.AssistantActivity
 import org.linphone.ui.assistant.viewmodel.PermissionsViewModel
+import org.linphone.utils.LinphoneUtils.Companion.visibleAccounts
 import kotlin.getValue
 
 @UiThread
@@ -152,8 +153,8 @@ class PermissionsFragment : GenericFragment() {
             Log.w(
                 "$TAG We were asked to leave assistant if at least an account is already configured"
             )
-            coreContext.postOnCoreThread { core ->
-                if (core.accountList.isNotEmpty()) {
+            coreContext.postOnCoreThread { _ ->
+                if (visibleAccounts().isNotEmpty()) {
                     coreContext.postOnMainThread {
                         Log.w("$TAG At least one account was found, leaving assistant")
                         try {

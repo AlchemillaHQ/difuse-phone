@@ -10,14 +10,15 @@
     <entry name="quality_reporting_interval" overwrite="true">0</entry>
     <entry name="reg_expires" overwrite="true">3600</entry>
     <entry name="reg_identity" overwrite="true"></entry>
-    <entry name="reg_proxy" overwrite="true"></entry>
-    <entry name="reg_route" overwrite="true"></entry>
+    <entry name="reg_proxy" overwrite="true">&lt;sip:vega.alchemilla.io;transport=tls&gt;</entry>
+    <entry name="reg_route" overwrite="true">&lt;sip:vega.alchemilla.io;transport=tls&gt;</entry>
     <entry name="reg_sendregister" overwrite="true">1</entry>
     <entry name="nat_policy_ref" overwrite="true"></entry>
-    <entry name="realm" overwrite="true"></entry>
+    <entry name="realm" overwrite="true">vega.alchemilla.io</entry>
     <entry name="conference_factory_uri" overwrite="true"></entry>
     <entry name="audio_video_conference_factory_uri" overwrite="true"></entry>
-    <entry name="push_notification_allowed" overwrite="true">0</entry>
+    <!-- RFC 8599: enable push notifications so B2BUA can wake the app -->
+    <entry name="push_notification_allowed" overwrite="true">1</entry>
     <entry name="cpim_in_basic_chat_rooms_enabled" overwrite="true">0</entry>
     <entry name="rtp_bundle" overwrite="true">0</entry>
     <entry name="lime_server_url" overwrite="true"></entry>
@@ -29,8 +30,8 @@
     <entry name="protocols" overwrite="true">stun,ice</entry>
   </section>
   <section name="sip">
-    <entry name="media_encryption">srtp</entry>
-    <entry name="media_encryption_mandatory" overwrite="true">0</entry>
+    <entry name="media_encryption" overwrite="true">srtp</entry>
+    <entry name="media_encryption_mandatory" overwrite="true">1</entry>
   </section>
   <section name="ui">
     <entry name="automatically_show_dialpad" overwrite="true">1</entry>

@@ -114,8 +114,7 @@ class AccountSettingsViewModel
         expandNatPolicySettings.value = false
         showTurnPassword.value = false
 
-        availableTransports.add(TransportType.Udp.name.uppercase(Locale.getDefault()))
-        availableTransports.add(TransportType.Tcp.name.uppercase(Locale.getDefault()))
+        // Only TLS is supported — UDP and TCP are intentionally excluded
         availableTransports.add(TransportType.Tls.name.uppercase(Locale.getDefault()))
 
         imEncryptionMandatoryAvailable.addSource(limeServerUrl) {
@@ -152,7 +151,8 @@ class AccountSettingsViewModel
 
                 imEncryptionMandatory.postValue(params.instantMessagingEncryptionMandatory)
 
-                val transportType = params.serverAddress?.transport ?: TransportType.Tls
+                // Always enforce TLS regardless of what's stored
+                val transportType = TransportType.Tls
                 selectedTransport.postValue(transportType)
 
                 sipProxyServer.postValue(params.serverAddress?.asStringUriOnly())
@@ -228,7 +228,7 @@ class AccountSettingsViewModel
                     Log.i("$TAG Proxy server set to [$server]")
                     val serverAddress = core.interpretUrl(server, false)
                     if (serverAddress != null) {
-                        serverAddress.transport = selectedTransport.value
+                        serverAddress.transport = TransportType.Tls
                         newParams.serverAddress = serverAddress
                     } else {
                         Log.e("$TAG Failed to parse proxy server!")
@@ -239,7 +239,7 @@ class AccountSettingsViewModel
                     Log.i("$TAG Outbound proxy server set to [$outboundProxy]")
                     val outboundProxyAddress = core.interpretUrl(outboundProxy, false)
                     if (outboundProxyAddress != null) {
-                        outboundProxyAddress.transport = selectedTransport.value
+                        outboundProxyAddress.transport = TransportType.Tls
                         newParams.setRoutesAddresses(arrayOf(outboundProxyAddress))
                     } else {
                         Log.e("$TAG Failed to parse outbound proxy server!")

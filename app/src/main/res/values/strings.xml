@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 
 <!DOCTYPE resources [
-    <!ENTITY appName "Linphone">
+    <!ENTITY appName "Difuse Phone">
 ]>
 
 <resources>
@@ -48,6 +48,8 @@
     <string name="sip_address">SIP address</string>
     <string name="device_id">Device ID</string>
     <string name="sip_address_display_name">Display name</string>
+    <string name="upstream_host">Upstream Host</string>
+    <string name="upstream_host_hint">e.g. example.com</string>
     <string name="sip_address_domain">Domain</string>
     <string name="username">Username</string>
     <string name="authentication_id">Authentication ID (if different)</string>
@@ -151,7 +153,7 @@
     <string name="assistant_scan_qr_code">Scan QR code</string>
     <string name="assistant_qr_code_invalid_toast">Invalid QR code!</string>
     <string name="assistant_login_third_party_sip_account">Use a third party SIP account</string>
-    <string name="assistant_login_third_party_sip_account_title">Third party SIP account</string>
+    <string name="assistant_login_third_party_sip_account_title">Account Details</string>
     <string name="assistant_login_using_single_sign_on">Single sign on</string>
     <string name="assistant_login_cant_parse_address_toast">SIP address is invalid!</string>
     <string name="assistant_login_address_without_username_toast">SIP address doesn\'t contains a username!</string>

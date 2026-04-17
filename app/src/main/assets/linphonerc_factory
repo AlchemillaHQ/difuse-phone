@@ -1,4 +1,3 @@
-
 ## Start of factory rc
 
 # This file shall not contain path referencing package name, in order to be portable when app is renamed.
@@ -46,6 +45,9 @@ store_friends=0
 
 [app]
 record_aware=1
+# Allow push notifications for vega.alchemilla.io (RFC 8599)
+push_notification_domains=vega.alchemilla.io
+default_domain=vega.alchemilla.io
 
 [account_creator]
 url=https://subscribe.linphone.org/api/
@@ -55,5 +57,13 @@ lime_update_threshold=86400
 
 [alerts]
 alerts_enabled=1
+
+[ui]
+# Pre-fill assistant with Difuse B2BUA settings and go directly to third-party login
+assistant_third_party_sip_account_domain=vega.alchemilla.io
+assistant_third_party_sip_account_transport=tls
+assistant_go_directly_to_third_party_sip_account_login=1
+assistant_hide_create_account=1
+assistant_disable_qr_code=1
 
 ## End of factory rc

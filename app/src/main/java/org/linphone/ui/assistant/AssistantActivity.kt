@@ -40,6 +40,7 @@ import org.linphone.core.tools.Log
 import org.linphone.databinding.AssistantActivityBinding
 import org.linphone.ui.GenericActivity
 import org.linphone.ui.assistant.fragment.PermissionsFragmentDirections
+import org.linphone.utils.LinphoneUtils.Companion.visibleAccounts
 
 @UiThread
 class AssistantActivity : GenericActivity() {
@@ -71,8 +72,8 @@ class AssistantActivity : GenericActivity() {
             WindowInsetsCompat.CONSUMED
         }
 
-        coreContext.postOnCoreThread { core ->
-            if (core.accountList.isEmpty()) {
+        coreContext.postOnCoreThread { _ ->
+            if (visibleAccounts().isEmpty()) {
                 Log.i("$TAG No account configured, disabling back gesture")
                 coreContext.postOnMainThread {
                     // Disable back gesture / button
@@ -90,8 +91,8 @@ class AssistantActivity : GenericActivity() {
                 Log.w(
                     "$TAG We were asked to leave assistant if at least an account is already configured"
                 )
-                coreContext.postOnCoreThread { core ->
-                    if (core.accountList.isNotEmpty()) {
+                coreContext.postOnCoreThread { _ ->
+                    if (visibleAccounts().isNotEmpty()) {
                         coreContext.postOnMainThread {
                             try {
                                 Log.w("$TAG At least one account was found, leaving assistant")

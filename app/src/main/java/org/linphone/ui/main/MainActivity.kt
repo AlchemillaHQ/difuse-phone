@@ -76,6 +76,7 @@ import org.linphone.utils.DialogUtils
 import org.linphone.utils.Event
 import org.linphone.utils.FileUtils
 import org.linphone.utils.LinphoneUtils
+import org.linphone.utils.LinphoneUtils.Companion.visibleAccounts
 import androidx.core.content.edit
 
 @UiThread
@@ -577,7 +578,7 @@ class MainActivity : GenericActivity() {
     }
 
     private fun handleMainIntent(intent: Intent) {
-        coreContext.postOnCoreThread { core ->
+        coreContext.postOnCoreThread { _ ->
             if (corePreferences.firstLaunch) {
                 Log.i("$TAG First time Linphone 6.0 has been started, showing Welcome activity")
                 corePreferences.firstLaunch = false
@@ -588,7 +589,7 @@ class MainActivity : GenericActivity() {
                         Log.e("$TAG Can't start activity: $ise")
                     }
                 }
-            } else if (core.accountList.isEmpty()) {
+            } else if (visibleAccounts().isEmpty()) {
                 Log.w("$TAG No account found, showing Assistant activity")
                 coreContext.postOnMainThread {
                     try {

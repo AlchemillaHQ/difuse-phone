@@ -32,6 +32,7 @@ import org.linphone.utils.Event
 import org.linphone.R
 import org.linphone.core.GlobalState
 import org.linphone.utils.LinphoneUtils
+import org.linphone.utils.LinphoneUtils.Companion.visibleAccounts
 
 class QrCodeViewModel
     @UiThread
@@ -58,7 +59,7 @@ class QrCodeViewModel
         @WorkerThread
         override fun onGlobalStateChanged(core: Core, state: GlobalState?, message: String) {
             if (state == GlobalState.On) {
-                if (core.accountList.isEmpty()) {
+                if (visibleAccounts().isEmpty()) {
                     Log.w("$TAG Provisioning was successful but no account has been configured yet, staying in assistant")
                     // Remote provisioning didn't contain any account
                     // and there wasn't at least one configured before either

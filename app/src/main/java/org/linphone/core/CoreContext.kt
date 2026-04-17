@@ -40,7 +40,10 @@ import androidx.annotation.WorkerThread
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import org.json.JSONObject
 import kotlin.system.exitProcess
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 import org.linphone.BuildConfig
 import org.linphone.LinphoneApplication.Companion.coreContext
 import org.linphone.LinphoneApplication.Companion.corePreferences
@@ -56,12 +59,18 @@ import org.linphone.utils.AudioUtils
 import org.linphone.utils.Event
 import org.linphone.utils.FileUtils
 import org.linphone.utils.LinphoneUtils
+import org.linphone.utils.LinphoneUtils.Companion.isPushOnly
 
 class CoreContext
     @UiThread
     constructor(val context: Context) : HandlerThread("Core Thread") {
     companion object {
         private const val TAG = "[Core Context]"
+        private const val PUSH_REGISTER_WINDOW_MS = 2 * 60 * 1000L
+        private const val PUSH_REGISTER_RETRY_INTERVAL_MS = 1500L
+        private const val PUSH_REGISTER_RETRY_ATTEMPTS = 8
+        private const val DIFUSE_PUSH_ONLY_PARAM = "difuse_push_only"
+        private const val DIFUSE_PAIR_ID_PARAM = "difuse_pair_id"
     }
 
     lateinit var core: Core
@@ -133,6 +142,9 @@ class CoreContext
     }
 
     private var keepAliveServiceStarted = false
+    private val difuseStatusCheckInProgress = AtomicBoolean(false)
+    private val difuseInitialRegisterInProgress = AtomicBoolean(false)
+    private var lastDifuseStatusCheckTimestampMs = 0L
 
     private lateinit var proximityWakeLock: PowerManager.WakeLock
 
@@ -192,6 +204,21 @@ class CoreContext
     private var previousCallState = Call.State.Idle
 
     private val coreListener = object : CoreListenerStub() {
+        @WorkerThread
+        override fun onPushNotificationReceived(core: Core, payload: String?) {
+            Log.e("$TAG ================= CORE PUSH CALLBACK (BEGIN) =================")
+            Log.e("$TAG CoreListener.onPushNotificationReceived payload=[$payload]")
+
+            val json = runCatching { JSONObject(payload.orEmpty()) }.getOrNull()
+            val callId = extractPushField(json, "call-id", "call_id")
+            val callerUri = extractPushField(json, "caller-uri", "caller_uri", "from", "remote_uri")
+            val callerName = extractPushField(json, "caller-name", "caller_name", "from-name")
+            Log.e("$TAG Parsed push payload call_id=[$callId], caller_uri=[$callerUri], caller_name=[$callerName]")
+
+            triggerTemporaryRegisterForPushOnlyAccounts(core, callerUri)
+            Log.e("$TAG ================== CORE PUSH CALLBACK (END) ==================")
+        }
+
         @WorkerThread
         override fun onDefaultAccountChanged(core: Core, account: Account?) {
             defaultAccountHasVideoConferenceFactoryUri = account?.params?.audioVideoConferenceFactoryAddress != null
@@ -271,7 +298,7 @@ class CoreContext
             if (status == ConfiguringState.Successful) {
                 val accounts = core.accountList
                 if (core.defaultAccount == null && accounts.isNotEmpty()) {
-                    val firstAccount = accounts.firstOrNull()
+                    val firstAccount = accounts.firstOrNull { !it.isPushOnly() } ?: accounts.firstOrNull()
                     if (firstAccount != null) {
                         val sipUri = firstAccount.params.identityAddress?.asStringUriOnly()
                         Log.w(
@@ -316,6 +343,12 @@ class CoreContext
             )
             when (currentState) {
                 Call.State.IncomingReceived -> {
+                    if (!core.isInBackground) {
+                        postOnMainThread {
+                            showCallActivity()
+                        }
+                    }
+
                     if (corePreferences.autoAnswerEnabled) {
                         val autoAnswerDelay = corePreferences.autoAnswerDelay
                         if (autoAnswerDelay == 0) {
@@ -546,7 +579,9 @@ class CoreContext
             if (core.defaultAccount == null || core.defaultAccount == account) {
                 Log.w("$TAG Removed account was the default one, choosing another as default if possible")
                 val newDefaultAccount = core.accountList.find {
-                    it.params.isRegisterEnabled
+                    it.params.isRegisterEnabled && !it.isPushOnly()
+                } ?: core.accountList.find {
+                    !it.isPushOnly()
                 } ?: core.accountList.firstOrNull()
                 if (newDefaultAccount == null) {
                     Log.e("$TAG Failed to find a new default account!")
@@ -655,7 +690,7 @@ class CoreContext
         val accounts = core.accountList
         if (core.defaultAccount == null && accounts.isNotEmpty()) {
             Log.e("$TAG No default account set but accounts list not empty!")
-            val firstAccount = accounts.first()
+            val firstAccount = accounts.firstOrNull { !it.isPushOnly() } ?: accounts.first()
             core.defaultAccount = firstAccount
             Log.w("$TAG Set account [${firstAccount?.params?.identityAddress?.asStringUriOnly()}] as default")
         }
@@ -702,6 +737,12 @@ class CoreContext
         telecomManager.onCoreStarted(core)
         notificationsManager.onCoreStarted(core, oldVersion < 600000) // Re-create channels when migrating from a non 6.0 version
         Log.i("$TAG Started contacts, telecom & notifications managers")
+
+        // Ensure every account's proxy uses TLS — fixes accounts saved before this was enforced
+        enforceTlsOnAllAccounts()
+        refreshDifusePushTokenIfNeeded()
+        registerDifuseDeviceIfNeeded()
+        checkDifuseUpstreamRegistrationIfNeeded()
 
         if (corePreferences.keepServiceAlive) {
             if (activityMonitor.isInForeground() || corePreferences.autoStart) {
@@ -827,6 +868,10 @@ class CoreContext
             if (corePreferences.keepServiceAlive && !keepAliveServiceStarted) {
                 startKeepAliveService()
             }
+
+            refreshDifusePushTokenIfNeeded()
+            registerDifuseDeviceIfNeeded()
+            checkDifuseUpstreamRegistrationIfNeeded()
         }
     }
 
@@ -1150,6 +1195,335 @@ class CoreContext
         core.setUserAgent(userAgent, sdkUserAgent)
     }
 
+    /**
+     * Ensures every account's proxy server (and outbound routes) use TLS transport.
+     * Runs on every startup to fix accounts that were persisted before TLS was enforced.
+     */
+    @WorkerThread
+    private fun enforceTlsOnAllAccounts() {
+        for (account in core.accountList) {
+            if (account.isPushOnly()) {
+                // Push-only Difuse accounts may use UDP/TCP/TLS depending on backend setup.
+                continue
+            }
+            val params = account.params
+            val serverAddress = params.serverAddress ?: continue
+            if (serverAddress.transport != TransportType.Tls) {
+                Log.w(
+                    "$TAG Account [${params.identityAddress?.asStringUriOnly()}] has transport " +
+                        "[${serverAddress.transport}] — forcing TLS"
+                )
+                val clone = params.clone()
+                val newServer = serverAddress.clone()
+                newServer.transport = TransportType.Tls
+                clone.serverAddress = newServer
+                val fixedRoutes = params.routesAddresses.map { r ->
+                    val rc = r.clone()
+                    rc.transport = TransportType.Tls
+                    rc
+                }.toTypedArray()
+                if (fixedRoutes.isNotEmpty()) clone.setRoutesAddresses(fixedRoutes)
+                account.params = clone
+            }
+        }
+    }
+
+    @WorkerThread
+    private fun refreshDifusePushTokenIfNeeded() {
+        val deviceId = corePreferences.difuseDeviceId
+        if (deviceId.isEmpty()) return
+        if (corePreferences.difuseB2buaSipUri.isEmpty()) return
+
+        val token = core.pushNotificationConfig?.prid.orEmpty().trim()
+        if (token.isEmpty()) return
+
+        val previousToken = corePreferences.difusePushToken
+        if (token == previousToken) return
+
+        Log.i("$TAG Difuse push token changed, refreshing device registration")
+        DifuseApi.refreshDeviceAsync(deviceId, token) { success ->
+            if (success) {
+                corePreferences.difusePushToken = token
+            }
+        }
+    }
+
+    @WorkerThread
+    private fun checkDifuseUpstreamRegistrationIfNeeded() {
+        val deviceId = corePreferences.difuseDeviceId
+        if (deviceId.isEmpty()) return
+        if (corePreferences.difuseB2buaSipUri.isEmpty()) return
+
+        val now = System.currentTimeMillis()
+        if (now - lastDifuseStatusCheckTimestampMs < 60_000L) return
+        if (!difuseStatusCheckInProgress.compareAndSet(false, true)) return
+        lastDifuseStatusCheckTimestampMs = now
+        Log.i("$TAG Checking Difuse status for device [$deviceId]")
+
+        DifuseApi.getDeviceStatusAsync(deviceId) { status ->
+            if (status == null) {
+                difuseStatusCheckInProgress.set(false)
+                return@getDeviceStatusAsync
+            }
+
+            if (status.statusCode == 404) {
+                Log.w("$TAG Difuse status returned 404, attempting register fallback")
+                registerDeviceOnDifuseFromCurrentAccount(deviceId, "status_404") {
+                    difuseStatusCheckInProgress.set(false)
+                }
+                return@getDeviceStatusAsync
+            }
+
+            if (status.statusCode !in 200..299) {
+                Log.w("$TAG Difuse status check failed with status [${status.statusCode}] body [${status.responseBodySnippet}]")
+                difuseStatusCheckInProgress.set(false)
+                return@getDeviceStatusAsync
+            }
+
+            if (status.upstreamRegistered) {
+                difuseStatusCheckInProgress.set(false)
+                return@getDeviceStatusAsync
+            }
+
+            Log.w("$TAG Difuse reports upstream not registered, forcing reregister")
+            DifuseApi.reregisterDeviceDetailedAsync(deviceId) { result ->
+                if (result == null) {
+                    Log.e("$TAG Difuse forced reregister request failed")
+                    difuseStatusCheckInProgress.set(false)
+                    return@reregisterDeviceDetailedAsync
+                }
+
+                if (result.success) {
+                    difuseStatusCheckInProgress.set(false)
+                    return@reregisterDeviceDetailedAsync
+                }
+
+                if (result.statusCode == 404) {
+                    Log.w("$TAG Difuse reregister returned 404, attempting register fallback")
+                    registerDeviceOnDifuseFromCurrentAccount(deviceId, "reregister_404") {
+                        difuseStatusCheckInProgress.set(false)
+                    }
+                    return@reregisterDeviceDetailedAsync
+                }
+
+                Log.e("$TAG Difuse forced reregister request failed with status [${result.statusCode}] body [${result.responseBodySnippet}]")
+                difuseStatusCheckInProgress.set(false)
+            }
+        }
+    }
+
+    @WorkerThread
+    private fun registerDifuseDeviceIfNeeded() {
+        val deviceId = corePreferences.difuseDeviceId
+        if (deviceId.isEmpty()) return
+        if (corePreferences.difuseB2buaSipUri.isNotEmpty()) return
+
+        val token = core.pushNotificationConfig?.prid.orEmpty().trim().ifEmpty {
+            corePreferences.difusePushToken
+        }
+        if (token.isEmpty()) {
+            Log.i("$TAG Difuse initial register is pending: push token is still empty")
+            return
+        }
+
+        if (!difuseInitialRegisterInProgress.compareAndSet(false, true)) return
+
+        Log.i("$TAG Difuse B2BUA URI is missing, attempting register fallback now that push token is available")
+        registerDeviceOnDifuseFromCurrentAccount(deviceId, "missing_b2bua") {
+            difuseInitialRegisterInProgress.set(false)
+        }
+    }
+
+    @AnyThread
+    private fun registerDeviceOnDifuseFromCurrentAccount(
+        deviceId: String,
+        trigger: String,
+        onComplete: () -> Unit
+    ) {
+        postOnCoreThread {
+            Log.w("$TAG Starting Difuse register fallback for device [$deviceId], trigger=[$trigger]")
+            val account = core.accountList.find {
+                !it.isPushOnly() && it.params.isRegisterEnabled
+            } ?: core.defaultAccount?.takeIf { !it.isPushOnly() }
+                ?: core.accountList.find { !it.isPushOnly() }
+
+            if (account == null) {
+                Log.e("$TAG Can't perform Difuse register fallback, no visible SIP account found")
+                onComplete.invoke()
+                return@postOnCoreThread
+            }
+
+            val identity = account.params.identityAddress
+            val authInfo = account.findAuthInfo()
+            val server = account.params.serverAddress
+
+            var upstreamHost = authInfo?.domain.orEmpty().ifEmpty {
+                server?.domain.orEmpty().ifEmpty { identity?.domain.orEmpty() }
+            }
+            var upstreamUser = authInfo?.username.orEmpty().ifEmpty { identity?.username.orEmpty() }
+            var upstreamPassword = authInfo?.password.orEmpty()
+            var upstreamRealm = authInfo?.realm.orEmpty().ifEmpty { upstreamHost }
+            var upstreamTransport = when (server?.transport) {
+                TransportType.Udp -> "udp"
+                TransportType.Tcp -> "tcp"
+                else -> "tls"
+            }
+            var upstreamPort = server?.port?.takeIf { it > 0 } ?: if (upstreamTransport == "tls") 5061 else 5060
+            val pushToken = core.pushNotificationConfig?.prid.orEmpty().trim().ifEmpty {
+                corePreferences.difusePushToken
+            }
+            var displayName = identity?.displayName.orEmpty()
+
+            if (pushToken.isEmpty()) {
+                Log.e("$TAG Can't perform Difuse register fallback, push token is empty")
+                onComplete.invoke()
+                return@postOnCoreThread
+            }
+
+            if (upstreamHost.isEmpty() || upstreamUser.isEmpty() || upstreamPassword.isEmpty()) {
+                Log.w("$TAG Runtime account/auth credentials incomplete, trying persisted Difuse fallback credentials")
+                upstreamHost = corePreferences.difuseUpstreamHost
+                upstreamUser = corePreferences.difuseUpstreamUser
+                upstreamPassword = corePreferences.difuseUpstreamPassword
+                upstreamRealm = corePreferences.difuseUpstreamRealm.ifEmpty { upstreamHost }
+                upstreamTransport = corePreferences.difuseUpstreamTransport.ifEmpty { upstreamTransport }
+                val cachedPort = corePreferences.difuseUpstreamPort
+                if (cachedPort > 0) {
+                    upstreamPort = cachedPort
+                } else if (upstreamPort <= 0) {
+                    upstreamPort = if (upstreamTransport == "tls") 5061 else 5060
+                }
+                if (displayName.isEmpty()) {
+                    displayName = corePreferences.difuseDisplayName
+                }
+            }
+
+            if (upstreamHost.isEmpty() || upstreamUser.isEmpty() || upstreamPassword.isEmpty()) {
+                Log.e("$TAG Can't perform Difuse register fallback, upstream credentials are incomplete")
+                onComplete.invoke()
+                return@postOnCoreThread
+            }
+
+            Thread {
+                val result = DifuseApi.registerDevice(
+                    deviceId = deviceId,
+                    pushToken = pushToken,
+                    upstreamHost = upstreamHost,
+                    upstreamPort = upstreamPort,
+                    upstreamTransport = upstreamTransport,
+                    upstreamUser = upstreamUser,
+                    upstreamPassword = upstreamPassword,
+                    upstreamRealm = upstreamRealm,
+                    displayName = displayName,
+                )
+
+                if (result != null && result.statusCode in 200..299 && result.b2buaSipUri.isNotEmpty()) {
+                    corePreferences.difuseB2buaSipUri = result.b2buaSipUri
+                    corePreferences.difusePushToken = pushToken
+                    Log.i("$TAG Difuse register fallback succeeded for device [$deviceId], trigger=[$trigger]")
+                    postOnCoreThread {
+                        ensurePushOnlyDifuseAccountExists(account, result.b2buaSipUri)
+                    }
+                } else {
+                    Log.e("$TAG Difuse register fallback failed for device [$deviceId], trigger=[$trigger]")
+                }
+
+                onComplete.invoke()
+            }.start()
+        }
+    }
+
+    @WorkerThread
+    private fun triggerTemporaryRegisterForPushOnlyAccounts(core: Core, callerUri: String?) {
+        if (!callerUri.isNullOrEmpty() && isCallerAlreadyRinging(core, callerUri)) {
+            Log.i("$TAG [core_listener] Ignoring duplicate push for caller [$callerUri] because app is already ringing")
+            return
+        }
+
+        val triggered = refreshRegistersForIncomingPush(core)
+
+        // Retry REGISTER bursts a few times in case the first one misses the INVITE race window.
+        scheduleIncomingPushRegisterRetry(core, callerUri, 1)
+
+        if (triggered == 0) {
+            Log.w("$TAG [core_listener] No push-only account configured, nothing to REGISTER")
+        } else {
+            Log.i("$TAG [core_listener] Triggered temporary REGISTER for [$triggered] push-only account(s)")
+        }
+    }
+
+    @WorkerThread
+    private fun refreshRegistersForIncomingPush(core: Core): Int {
+        var triggered = 0
+        for (account in core.accountList) {
+            if (!account.isPushOnly()) continue
+
+            val params = account.params
+            if (!params.isRegisterEnabled) {
+                val clone = params.clone()
+                clone.isRegisterEnabled = true
+                account.params = clone
+            }
+
+            account.refreshRegister()
+            triggered += 1
+
+            postOnCoreThreadDelayed({
+                if (!core.accountList.contains(account)) {
+                    return@postOnCoreThreadDelayed
+                }
+                val latest = account.params
+                if (latest.isRegisterEnabled) {
+                    val clone = latest.clone()
+                    clone.isRegisterEnabled = false
+                    account.params = clone
+                }
+            }, PUSH_REGISTER_WINDOW_MS)
+        }
+
+        val visibleEnabledAccounts = core.accountList.filter { !it.isPushOnly() && it.params.isRegisterEnabled }
+        if (visibleEnabledAccounts.isNotEmpty()) {
+            Log.i("$TAG [core_listener] Refreshing REGISTER on [${visibleEnabledAccounts.size}] visible account(s) as push fallback")
+            core.refreshRegisters()
+        }
+
+        return triggered
+    }
+
+    @WorkerThread
+    private fun scheduleIncomingPushRegisterRetry(core: Core, callerUri: String?, attempt: Int) {
+        if (attempt > PUSH_REGISTER_RETRY_ATTEMPTS) return
+
+        postOnCoreThreadDelayed({
+            if (!callerUri.isNullOrEmpty() && isCallerAlreadyRinging(core, callerUri)) {
+                Log.i("$TAG [core_listener] Incoming call is now ringing, stop REGISTER retries")
+                return@postOnCoreThreadDelayed
+            }
+
+            val triggered = refreshRegistersForIncomingPush(core)
+            Log.i("$TAG [core_listener] Push retry #$attempt refreshed push-only REGISTER on [$triggered] account(s)")
+
+            scheduleIncomingPushRegisterRetry(core, callerUri, attempt + 1)
+        }, PUSH_REGISTER_RETRY_INTERVAL_MS)
+    }
+
+    @WorkerThread
+    private fun isCallerAlreadyRinging(core: Core, callerUri: String): Boolean {
+        return core.calls.any { call ->
+            LinphoneUtils.isCallIncoming(call.state) &&
+                call.remoteAddress.asStringUriOnly().contains(callerUri, ignoreCase = true)
+        }
+    }
+
+    private fun extractPushField(json: JSONObject?, vararg keys: String): String? {
+        if (json == null) return null
+        for (key in keys) {
+            val value = json.optString(key, "").trim()
+            if (value.isNotEmpty()) return value
+        }
+        return null
+    }
+
     // Migration between versions related
 
     @WorkerThread
@@ -1166,6 +1540,50 @@ class CoreContext
                 account.params = clone
             }
         }
+    }
+
+    @WorkerThread
+    private fun ensurePushOnlyDifuseAccountExists(visibleAccount: Account, b2buaSipUri: String) {
+        if (!core.accountList.contains(visibleAccount)) {
+            Log.w("$TAG Can't ensure Difuse push-only account, visible account no longer exists")
+            return
+        }
+
+        val b2buaIdentity = Factory.instance().createAddress(b2buaSipUri)
+        if (b2buaIdentity == null || b2buaIdentity.username.isNullOrEmpty() || b2buaIdentity.domain.isNullOrEmpty()) {
+            Log.e("$TAG Failed to parse Difuse B2BUA SIP URI [$b2buaSipUri]")
+            return
+        }
+
+        var pairId = visibleAccount.params.getCustomParam(DIFUSE_PAIR_ID_PARAM)
+        if (pairId.isNullOrEmpty()) {
+            pairId = UUID.randomUUID().toString()
+            val clone = visibleAccount.params.clone()
+            clone.addCustomParam(DIFUSE_PAIR_ID_PARAM, pairId)
+            visibleAccount.params = clone
+            Log.i("$TAG Added missing Difuse pair ID to visible account [${visibleAccount.params.identityAddress?.asStringUriOnly()}]")
+        }
+
+        val existingPushAccount = core.accountList.find {
+            it.isPushOnly() && it.params.getCustomParam(DIFUSE_PAIR_ID_PARAM) == pairId
+        }
+        if (existingPushAccount != null) {
+            Log.i("$TAG Difuse push-only account already exists for pair [$pairId], nothing to create")
+            return
+        }
+
+        val pushParams = core.createAccountParams()
+        pushParams.identityAddress = b2buaIdentity
+        val pushServer = Factory.instance().createAddress("sip:${b2buaIdentity.domain}")
+        pushParams.serverAddress = pushServer
+        pushParams.pushNotificationAllowed = true
+        pushParams.isRegisterEnabled = false
+        pushParams.addCustomParam(DIFUSE_PUSH_ONLY_PARAM, "true")
+        pushParams.addCustomParam(DIFUSE_PAIR_ID_PARAM, pairId)
+
+        val pushAccount = core.createAccount(pushParams)
+        core.addAccount(pushAccount)
+        Log.i("$TAG Created missing Difuse push-only account [${b2buaIdentity.asStringUriOnly()}] for pair [$pairId]")
     }
 
     @WorkerThread

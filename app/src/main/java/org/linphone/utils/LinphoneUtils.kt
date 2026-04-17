@@ -92,6 +92,21 @@ class LinphoneUtils {
             return coreContext.core.defaultAccount ?: coreContext.core.accountList.firstOrNull()
         }
 
+        /**
+         * Returns true if this account is a background push-notification-only registration
+         * (the Difuse B2BUA shadow account). It should never be shown in the UI.
+         */
+        @WorkerThread
+        fun Account.isPushOnly(): Boolean {
+            return params.getCustomParam("difuse_push_only") == "true"
+        }
+
+        /** All visible (non-push-only) accounts. */
+        @WorkerThread
+        fun visibleAccounts(): List<Account> {
+            return coreContext.core.accountList.filter { !it.isPushOnly() }
+        }
+
         @WorkerThread
         fun getAccountForAddress(address: Address): Account? {
             return coreContext.core.accountList.find {

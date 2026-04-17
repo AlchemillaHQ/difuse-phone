@@ -118,6 +118,76 @@ class CorePreferences
         }
 
     @get:AnyThread @set:WorkerThread
+    var difuseDeviceId: String
+        get() = config.getString("app", "difuse_device_id", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "difuse_device_id", value.trim())
+        }
+
+    @get:AnyThread @set:WorkerThread
+    var difuseB2buaSipUri: String
+        get() = config.getString("app", "difuse_b2bua_sip_uri", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "difuse_b2bua_sip_uri", value.trim())
+        }
+
+    @get:AnyThread @set:WorkerThread
+    var difusePushToken: String
+        get() = config.getString("app", "difuse_push_token", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "difuse_push_token", value.trim())
+        }
+
+    @get:AnyThread @set:WorkerThread
+    var difuseUpstreamHost: String
+        get() = config.getString("app", "difuse_upstream_host", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "difuse_upstream_host", value.trim())
+        }
+
+    @get:AnyThread @set:WorkerThread
+    var difuseUpstreamUser: String
+        get() = config.getString("app", "difuse_upstream_user", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "difuse_upstream_user", value.trim())
+        }
+
+    @get:AnyThread @set:WorkerThread
+    var difuseUpstreamPassword: String
+        get() = config.getString("app", "difuse_upstream_password", "").orEmpty()
+        set(value) {
+            config.setString("app", "difuse_upstream_password", value)
+        }
+
+    @get:AnyThread @set:WorkerThread
+    var difuseUpstreamRealm: String
+        get() = config.getString("app", "difuse_upstream_realm", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "difuse_upstream_realm", value.trim())
+        }
+
+    @get:AnyThread @set:WorkerThread
+    var difuseUpstreamTransport: String
+        get() = config.getString("app", "difuse_upstream_transport", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "difuse_upstream_transport", value.trim())
+        }
+
+    @get:AnyThread @set:WorkerThread
+    var difuseUpstreamPort: Int
+        get() = config.getInt("app", "difuse_upstream_port", 0)
+        set(value) {
+            config.setInt("app", "difuse_upstream_port", value)
+        }
+
+    @get:AnyThread @set:WorkerThread
+    var difuseDisplayName: String
+        get() = config.getString("app", "difuse_display_name", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "difuse_display_name", value.trim())
+        }
+
+    @get:AnyThread @set:WorkerThread
     var showDeveloperSettings: Boolean
         get() = config.getBool("ui", "show_developer_settings", false)
         set(value) {

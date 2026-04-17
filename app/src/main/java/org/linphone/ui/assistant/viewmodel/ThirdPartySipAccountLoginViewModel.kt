@@ -23,7 +23,7 @@ import androidx.annotation.UiThread
 import androidx.annotation.WorkerThread
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
-import java.util.Locale
+import java.util.UUID
 import org.linphone.LinphoneApplication.Companion.coreContext
 import org.linphone.LinphoneApplication.Companion.corePreferences
 import org.linphone.R
@@ -31,6 +31,7 @@ import org.linphone.core.Account
 import org.linphone.core.AuthInfo
 import org.linphone.core.Core
 import org.linphone.core.CoreListenerStub
+import org.linphone.core.DifuseApi
 import org.linphone.core.Factory
 import org.linphone.core.Reason
 import org.linphone.core.RegistrationState
@@ -45,7 +46,11 @@ class ThirdPartySipAccountLoginViewModel
     constructor() : GenericViewModel() {
     companion object {
         private const val TAG = "[Third Party SIP Account Login ViewModel]"
+        private const val DIFUSE_PUSH_ONLY_PARAM = "difuse_push_only"
+        private const val DIFUSE_PAIR_ID_PARAM = "difuse_pair_id"
     }
+
+    val showBackButton = MutableLiveData<Boolean>()
 
     val username = MutableLiveData<String>()
 
@@ -53,11 +58,10 @@ class ThirdPartySipAccountLoginViewModel
 
     val password = MutableLiveData<String>()
 
-    val domain = MutableLiveData<String>()
-
     val displayName = MutableLiveData<String>()
 
-    val transport = MutableLiveData<String>()
+    /** PBX SIP server hostname. */
+    val upstreamHost = MutableLiveData<String>()
 
     val internationalPrefix = MutableLiveData<String>()
 
@@ -83,14 +87,9 @@ class ThirdPartySipAccountLoginViewModel
         MutableLiveData<Event<String>>()
     }
 
-    val defaultTransportIndexEvent: MutableLiveData<Event<Int>> by lazy {
-        MutableLiveData<Event<Int>>()
-    }
-
-    val availableTransports = arrayListOf<String>()
-
     private lateinit var newlyCreatedAuthInfo: AuthInfo
-    private lateinit var newlyCreatedAccount: Account
+    private lateinit var newlyCreatedAccount: Account        // direct PBX account (visible)
+    private lateinit var newlyCreatedPushAccount: Account    // B2BUA push-only account (hidden)
 
     private val coreListener = object : CoreListenerStub() {
         @WorkerThread
@@ -100,14 +99,13 @@ class ThirdPartySipAccountLoginViewModel
             state: RegistrationState?,
             message: String
         ) {
+            // We track the direct PBX account — that's the one the user cares about
             if (account == newlyCreatedAccount) {
-                Log.i("$TAG Newly created account registration state is [$state] ($message)")
+                Log.i("$TAG Direct PBX account registration state is [$state] ($message)")
 
                 if (state == RegistrationState.Ok) {
                     registrationInProgress.postValue(false)
                     core.removeListener(this)
-
-                    // Set new account as default
                     core.defaultAccount = newlyCreatedAccount
                     accountLoggedInEvent.postValue(Event(true))
                 } else if (state == RegistrationState.Failed) {
@@ -127,9 +125,12 @@ class ThirdPartySipAccountLoginViewModel
                     }
                     accountLoginErrorEvent.postValue(Event(error))
 
-                    Log.e("$TAG Account failed to REGISTER [$message], removing it")
+                    Log.e("$TAG Account failed to REGISTER [$message], removing both accounts")
                     core.removeAuthInfo(newlyCreatedAuthInfo)
                     core.removeAccount(newlyCreatedAccount)
+                    if (::newlyCreatedPushAccount.isInitialized) {
+                        core.removeAccount(newlyCreatedPushAccount)
+                    }
                 }
             }
         }
@@ -143,28 +144,16 @@ class ThirdPartySipAccountLoginViewModel
         loginEnabled.addSource(username) {
             loginEnabled.value = isLoginButtonEnabled()
         }
-        loginEnabled.addSource(domain) {
+        loginEnabled.addSource(upstreamHost) {
+            loginEnabled.value = isLoginButtonEnabled()
+        }
+        loginEnabled.addSource(password) {
             loginEnabled.value = isLoginButtonEnabled()
         }
 
-        // TODO: handle formatting errors ?
-
-        availableTransports.add(TransportType.Udp.name.uppercase(Locale.getDefault()))
-        availableTransports.add(TransportType.Tcp.name.uppercase(Locale.getDefault()))
-        availableTransports.add(TransportType.Tls.name.uppercase(Locale.getDefault()))
-
-        coreContext.postOnCoreThread {
-            domain.postValue(corePreferences.thirdPartySipAccountDefaultDomain)
-
-            val defaultTransport = corePreferences.thirdPartySipAccountDefaultTransport.uppercase(
-                Locale.getDefault()
-            )
-            val index = if (defaultTransport.isNotEmpty()) {
-                availableTransports.indexOf(defaultTransport)
-            } else {
-                availableTransports.size - 1
-            }
-            defaultTransportIndexEvent.postValue(Event(index))
+        coreContext.postOnCoreThread { core ->
+            // Hide back button when no account is configured yet (first-time setup)
+            showBackButton.postValue(core.accountList.isNotEmpty())
         }
     }
 
@@ -173,22 +162,7 @@ class ThirdPartySipAccountLoginViewModel
         coreContext.postOnCoreThread { core ->
             core.loadConfigFromXml(corePreferences.thirdPartyDefaultValuesPath)
 
-            // Remove sip: in front of domain, just in case...
-            val domainValue = domain.value.orEmpty().trim()
-            val domainWithoutSip = if (domainValue.startsWith("sip:")) {
-                domainValue.substring("sip:".length)
-            } else {
-                domainValue
-            }
-            val domainAddress = Factory.instance().createAddress("sip:$domainWithoutSip")
-            val port = domainAddress?.port ?: -1
-            if (port != -1) {
-                Log.w("$TAG It seems a port [$port] was set in the domain [$domainValue], removing it from SIP identity but setting it to proxy server URI")
-            }
-            val domain = domainAddress?.domain ?: domainWithoutSip
-
             // Allow to enter SIP identity instead of simply username
-            // in case identity domain doesn't match proxy domain
             var user = username.value.orEmpty().trim()
             if (user.startsWith("sip:")) {
                 user = user.substring("sip:".length)
@@ -200,107 +174,202 @@ class ThirdPartySipAccountLoginViewModel
             }
 
             val userId = authId.value.orEmpty().trim()
+            val upstreamHostValue = upstreamHost.value.orEmpty().trim()
+            val passwordValue = password.value.orEmpty().trim()
+            val normalizedUpstreamHost = upstreamHostValue
+                .removePrefix("sip:")
+                .removePrefix("sips:")
+            // Upstream host may include port (e.g. pbx.example.com:5061) — strip port for identity
+            val upstreamHostName = normalizedUpstreamHost.substringBefore(":")
+            val upstreamPort = normalizedUpstreamHost.substringAfter(":", "").toIntOrNull() ?: 5061
+            Log.i("$TAG Parsed username [$user], user ID [$userId], upstream host [$upstreamHostValue]")
 
-            Log.i("$TAG Parsed username is [$user], user ID [$userId] and domain [$domain]")
-            val identity = "sip:$user@$domain"
-            val identityAddress = Factory.instance().createAddress(identity)
-            if (identityAddress == null) {
-                Log.e("$TAG Can't parse [$identity] as Address!")
+            // ── Account 1: direct PBX (visible to user) ──────────────────────────
+            val directIdentity = Factory.instance().createAddress("sip:$user@$upstreamHostName")
+            if (directIdentity == null) {
+                Log.e("$TAG Can't parse [sip:$user@$upstreamHostName] as Address!")
                 showRedToast(R.string.assistant_login_cant_parse_address_toast, R.drawable.warning_circle)
                 return@postOnCoreThread
             }
-            Log.i("$TAG Computed SIP identity is [${identityAddress.asStringUriOnly()}]")
-
-            val accounts = core.accountList
-            val found = accounts.find {
-                it.params.identityAddress?.weakEqual(identityAddress) == true
+            if (displayName.value.orEmpty().isNotEmpty()) {
+                directIdentity.displayName = displayName.value.orEmpty().trim()
             }
-            if (found != null) {
-                Log.w("$TAG An account with the same identity address [${found.params.identityAddress?.asStringUriOnly()}] already exists, do not add it again!")
+
+            val existingDirect = core.accountList.find {
+                it.params.identityAddress?.weakEqual(directIdentity) == true
+            }
+            if (existingDirect != null) {
+                Log.w("$TAG Account [${directIdentity.asStringUriOnly()}] already exists")
                 showRedToast(R.string.assistant_account_login_already_connected_error, R.drawable.warning_circle)
                 return@postOnCoreThread
             }
 
-            newlyCreatedAuthInfo = Factory.instance().createAuthInfo(
-                user,
-                userId,
-                password.value.orEmpty().trim(),
-                null,
-                null,
-                domainAddress?.domain ?: domainValue
-            )
-            core.addAuthInfo(newlyCreatedAuthInfo)
-
-            val accountParams = core.createAccountParams()
-
-            if (displayName.value.orEmpty().isNotEmpty()) {
-                identityAddress.displayName = displayName.value.orEmpty().trim()
+            val deviceId = getOrCreateDifuseDeviceId()
+            val pushToken = core.pushNotificationConfig?.prid.orEmpty().trim().ifEmpty {
+                corePreferences.difusePushToken
             }
-            accountParams.identityAddress = identityAddress
-
-            val proxyServerValue = proxy.value.orEmpty().trim()
-            val proxyServerAddress = if (proxyServerValue.isNotEmpty()) {
-                val server = if (proxyServerValue.startsWith("sip:")) {
-                    proxyServerValue
-                } else {
-                    "sip:$proxyServerValue"
-                }
-                Factory.instance().createAddress(server)
-            } else {
-                domainAddress ?: Factory.instance().createAddress("sip:$domainWithoutSip")
-            }
-            proxyServerAddress?.transport = when (transport.value.orEmpty().trim()) {
-                TransportType.Tcp.name.uppercase(Locale.getDefault()) -> TransportType.Tcp
-                TransportType.Tls.name.uppercase(Locale.getDefault()) -> TransportType.Tls
-                else -> TransportType.Udp
-            }
-            Log.i("$TAG Created proxy server SIP address [${proxyServerAddress?.asStringUriOnly()}]")
-            accountParams.serverAddress = proxyServerAddress
-
-            val outboundProxyValue = outboundProxy.value.orEmpty().trim()
-            val outboundProxyAddress = if (outboundProxyValue.isNotEmpty()) {
-                val server = if (outboundProxyValue.startsWith("sip:")) {
-                    outboundProxyValue
-                } else {
-                    "sip:$outboundProxyValue"
-                }
-                Factory.instance().createAddress(server)
-            } else {
-                null
-            }
-            if (outboundProxyAddress != null) {
-                outboundProxyAddress.transport = when (transport.value.orEmpty().trim()) {
-                    TransportType.Tcp.name.uppercase(Locale.getDefault()) -> TransportType.Tcp
-                    TransportType.Tls.name.uppercase(Locale.getDefault()) -> TransportType.Tls
-                    else -> TransportType.Udp
-                }
-                Log.i("$TAG Created outbound proxy server SIP address [${outboundProxyAddress?.asStringUriOnly()}]")
-                accountParams.setRoutesAddresses(arrayOf(outboundProxyAddress))
-            }
-
-            val prefix = internationalPrefix.value.orEmpty().trim()
-            val isoCountryCode = internationalPrefixIsoCountryCode.value.orEmpty()
-            if (prefix.isNotEmpty()) {
-                val prefixDigits = if (prefix.startsWith("+")) {
-                    prefix.substring(1)
-                } else {
-                    prefix
-                }
-                if (prefixDigits.isNotEmpty()) {
-                    Log.i(
-                        "$TAG Setting international prefix [$prefixDigits]($isoCountryCode) in account params"
-                    )
-                    accountParams.internationalPrefix = prefixDigits
-                    accountParams.internationalPrefixIsoCountryCode = isoCountryCode
-                }
-            }
-
-            newlyCreatedAccount = core.createAccount(accountParams)
+            val sipDisplayName = displayName.value.orEmpty().trim()
+            corePreferences.difuseUpstreamHost = upstreamHostName
+            corePreferences.difuseUpstreamUser = user
+            corePreferences.difuseUpstreamPassword = passwordValue
+            corePreferences.difuseUpstreamRealm = upstreamHostName
+            corePreferences.difuseUpstreamTransport = "tls"
+            corePreferences.difuseUpstreamPort = upstreamPort
+            corePreferences.difuseDisplayName = sipDisplayName
 
             registrationInProgress.postValue(true)
-            core.addListener(coreListener)
-            core.addAccount(newlyCreatedAccount)
+            if (pushToken.isEmpty()) {
+                Log.w("$TAG Push token is not available yet, continuing with direct PBX account and deferring Difuse registration")
+                val created = createAccountsAndStartRegistration(
+                    core = core,
+                    directIdentity = directIdentity,
+                    upstreamHostValue = upstreamHostValue,
+                    upstreamHostName = upstreamHostName,
+                    user = user,
+                    userId = userId,
+                    passwordValue = passwordValue,
+                    b2buaSipUri = null,
+                )
+                if (!created) {
+                    registrationInProgress.postValue(false)
+                }
+                return@postOnCoreThread
+            }
+
+            Thread {
+                val registerResult = DifuseApi.registerDevice(
+                    deviceId = deviceId,
+                    pushToken = pushToken,
+                    upstreamHost = upstreamHostName,
+                    upstreamPort = upstreamPort,
+                    upstreamTransport = "tls",
+                    upstreamUser = user,
+                    upstreamPassword = passwordValue,
+                    upstreamRealm = upstreamHostName,
+                    displayName = sipDisplayName,
+                )
+
+                coreContext.postOnCoreThread {
+                    if (registerResult == null || registerResult.statusCode !in 200..299 || registerResult.b2buaSipUri.isEmpty()) {
+                        registrationInProgress.postValue(false)
+                        val reason = if (registerResult == null) {
+                            "Difuse register request failed"
+                        } else {
+                            "Difuse register failed (${registerResult.statusCode})"
+                        }
+                        Log.e("$TAG $reason")
+                        accountLoginErrorEvent.postValue(
+                            Event(
+                                AppUtils.getFormattedString(
+                                    R.string.assistant_account_login_error,
+                                    reason
+                                )
+                            )
+                        )
+                        return@postOnCoreThread
+                    }
+
+                    val b2buaIdentity = Factory.instance().createAddress(registerResult.b2buaSipUri)
+                    if (b2buaIdentity == null || b2buaIdentity.username.isNullOrEmpty() || b2buaIdentity.domain.isNullOrEmpty()) {
+                        registrationInProgress.postValue(false)
+                        Log.e("$TAG Can't parse [${registerResult.b2buaSipUri}] as B2BUA Address!")
+                        showRedToast(R.string.assistant_login_cant_parse_address_toast, R.drawable.warning_circle)
+                        return@postOnCoreThread
+                    }
+
+                    corePreferences.difuseB2buaSipUri = registerResult.b2buaSipUri
+                    corePreferences.difusePushToken = pushToken
+                    Log.i("$TAG Difuse registration succeeded, using B2BUA URI [${b2buaIdentity.asStringUriOnly()}]")
+
+                    val created = createAccountsAndStartRegistration(
+                        core = core,
+                        directIdentity = directIdentity,
+                        upstreamHostValue = upstreamHostValue,
+                        upstreamHostName = upstreamHostName,
+                        user = user,
+                        userId = userId,
+                        passwordValue = passwordValue,
+                        b2buaSipUri = registerResult.b2buaSipUri,
+                    )
+                    if (!created) {
+                        registrationInProgress.postValue(false)
+                    }
+                }
+            }.start()
         }
+    }
+
+    @WorkerThread
+    private fun createAccountsAndStartRegistration(
+        core: Core,
+        directIdentity: org.linphone.core.Address,
+        upstreamHostValue: String,
+        upstreamHostName: String,
+        user: String,
+        userId: String,
+        passwordValue: String,
+        b2buaSipUri: String?,
+    ): Boolean {
+        newlyCreatedAuthInfo = Factory.instance().createAuthInfo(
+            user,
+            userId,
+            passwordValue,
+            null,
+            null,
+            upstreamHostName
+        )
+        core.addAuthInfo(newlyCreatedAuthInfo)
+
+        val directParams = core.createAccountParams()
+        directParams.identityAddress = directIdentity
+        val difusePairId = UUID.randomUUID().toString()
+        directParams.addCustomParam(DIFUSE_PAIR_ID_PARAM, difusePairId)
+        val directServer = Factory.instance().createAddress("sip:$upstreamHostValue")
+        directServer?.transport = TransportType.Tls
+        directParams.serverAddress = directServer
+        directParams.pushNotificationAllowed = false // B2BUA handles push wakeup
+
+        val prefix = internationalPrefix.value.orEmpty().trim()
+        val isoCountryCode = internationalPrefixIsoCountryCode.value.orEmpty()
+        if (prefix.isNotEmpty()) {
+            val prefixDigits = if (prefix.startsWith("+")) prefix.substring(1) else prefix
+            if (prefixDigits.isNotEmpty()) {
+                directParams.internationalPrefix = prefixDigits
+                directParams.internationalPrefixIsoCountryCode = isoCountryCode
+            }
+        }
+
+        newlyCreatedAccount = core.createAccount(directParams)
+        Log.i("$TAG Created direct PBX account [${directIdentity.asStringUriOnly()}]")
+
+        if (!b2buaSipUri.isNullOrEmpty()) {
+            val b2buaIdentity = Factory.instance().createAddress(b2buaSipUri)
+            if (b2buaIdentity == null || b2buaIdentity.username.isNullOrEmpty() || b2buaIdentity.domain.isNullOrEmpty()) {
+                Log.e("$TAG Can't parse [$b2buaSipUri] as B2BUA Address!")
+                showRedToast(R.string.assistant_login_cant_parse_address_toast, R.drawable.warning_circle)
+                return false
+            }
+
+            val pushParams = core.createAccountParams()
+            pushParams.identityAddress = b2buaIdentity
+            val pushServer = Factory.instance().createAddress("sip:${b2buaIdentity.domain}")
+            pushParams.serverAddress = pushServer
+            pushParams.pushNotificationAllowed = true
+            // This account should only REGISTER when the app is woken up by push.
+            pushParams.isRegisterEnabled = false
+            pushParams.addCustomParam(DIFUSE_PUSH_ONLY_PARAM, "true")
+            pushParams.addCustomParam(DIFUSE_PAIR_ID_PARAM, difusePairId)
+
+            newlyCreatedPushAccount = core.createAccount(pushParams)
+            Log.i("$TAG Created B2BUA push account [${b2buaIdentity.asStringUriOnly()}] (hidden)")
+            core.addAccount(newlyCreatedPushAccount)
+        } else {
+            Log.i("$TAG Push token pending, skipping B2BUA push-only account creation for now")
+        }
+
+        core.addListener(coreListener)
+        core.addAccount(newlyCreatedAccount) // direct PBX account — triggers registration check
+        return true
     }
 
     @UiThread
@@ -310,12 +379,24 @@ class ThirdPartySipAccountLoginViewModel
 
     @UiThread
     private fun isLoginButtonEnabled(): Boolean {
-        // Password isn't mandatory as authentication could be Bearer
-        return username.value.orEmpty().isNotEmpty() && domain.value.orEmpty().isNotEmpty()
+        return username.value.orEmpty().isNotEmpty() &&
+            upstreamHost.value.orEmpty().isNotEmpty() &&
+            password.value.orEmpty().isNotEmpty()
     }
 
     @UiThread
     fun toggleAdvancedSettingsExpand() {
         expandAdvancedSettings.value = expandAdvancedSettings.value == false
     }
+
+    @WorkerThread
+    private fun getOrCreateDifuseDeviceId(): String {
+        val stored = corePreferences.difuseDeviceId
+        if (stored.isNotEmpty()) return stored
+
+        val generated = UUID.randomUUID().toString()
+        corePreferences.difuseDeviceId = generated
+        return generated
+    }
+
 }

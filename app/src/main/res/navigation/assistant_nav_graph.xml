@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/assistant_nav_graph"
-    app:startDestination="@id/landingFragment">
+    app:startDestination="@id/thirdPartySipAccountLoginFragment">
 
     <fragment
         android:id="@+id/registerFragment"
@@ -48,8 +48,8 @@
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right"
             app:launchSingleTop="true"
-            app:popUpTo="@id/landingFragment"
-            app:popUpToInclusive="false" />
+            app:popUpTo="@id/thirdPartySipAccountLoginFragment"
+            app:popUpToInclusive="true" />
 
         <action
             android:id="@+id/action_thirdPartySipAccountWarningFragment_to_registerFragment"
@@ -59,7 +59,7 @@
             app:launchSingleTop="true"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right"
-            app:popUpTo="@id/landingFragment"
+            app:popUpTo="@id/thirdPartySipAccountLoginFragment"
             app:popUpToInclusive="false" />
 
     </fragment>
@@ -71,10 +71,10 @@
         tools:layout="@layout/assistant_register_confirm_sms_code_fragment" >
         <action
             android:id="@+id/action_registerCodeConfirmationFragment_to_landingFragment"
-            app:destination="@id/landingFragment"
+            app:destination="@id/thirdPartySipAccountLoginFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/landingFragment"
-            app:popUpToInclusive="false"
+            app:popUpTo="@id/thirdPartySipAccountLoginFragment"
+            app:popUpToInclusive="true"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
@@ -89,12 +89,14 @@
 
         <action
             android:id="@+id/action_permissionsFragment_to_landingFragment"
-            app:destination="@id/landingFragment"
+            app:destination="@id/thirdPartySipAccountLoginFragment"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right"
-            app:launchSingleTop="true" />
+            app:launchSingleTop="true"
+            app:popUpTo="@id/permissionsFragment"
+            app:popUpToInclusive="true" />
 
     </fragment>
 
@@ -143,7 +145,7 @@
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right"
             app:launchSingleTop="true"
-            app:popUpTo="@id/landingFragment"
+            app:popUpTo="@id/thirdPartySipAccountLoginFragment"
             app:popUpToInclusive="true" />
 
         <action

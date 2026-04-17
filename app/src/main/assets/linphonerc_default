@@ -1,19 +1,20 @@
-
 ## Start of default rc
 
 [sip]
-contact="Linphone Android" <sip:linphone.android@unknown-host>
+contact="Difuse Phone" <sip:difuse.phone@unknown-host>
 use_info=0
 use_ipv6=1
 keepalive_period=30000
-sip_port=-1
-sip_tcp_port=-1
-sip_tls_port=-1
-media_encryption=none
+sip_port=0
+sip_tcp_port=0
+sip_tls_port=5061
+media_encryption=srtp
+media_encryption_mandatory=1
 update_presence_model_timestamp_before_publish_expires_refresh=1
 use_rfc2833=1
 use_info=1
-rls_uri=sips:rls@sip.linphone.org
+rls_uri=sips:rls@vega.alchemilla.io
+verify_server_certs = 0
 
 [net]
 #Because dynamic bitrate adaption can increase bitrate, we must allow "no limit"
@@ -54,6 +55,6 @@ return_empty_friends=1
 imdn_to_everybody_threshold=1
 
 [ui]
-contacts_filter=sip.linphone.org
+contacts_filter=vega.alchemilla.io
 
 ## End of default rc
