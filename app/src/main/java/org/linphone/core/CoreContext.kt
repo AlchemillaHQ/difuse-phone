@@ -136,6 +136,14 @@ class CoreContext
         MutableLiveData<Event<Boolean>>()
     }
 
+    val mdmConfigAppliedEvent: MutableLiveData<Event<Boolean>> by lazy {
+        MutableLiveData<Event<Boolean>>()
+    }
+
+    val mdmConfigRemovedEvent: MutableLiveData<Event<Boolean>> by lazy {
+        MutableLiveData<Event<Boolean>>()
+    }
+
     private var filesToExportToNativeMediaGallery = arrayListOf<String>()
     val filesToExportToNativeMediaGalleryEvent: MutableLiveData<Event<List<String>>> by lazy {
         MutableLiveData<Event<List<String>>>()
@@ -665,7 +673,10 @@ class CoreContext
 
         defaultAccountHasVideoConferenceFactoryUri = core.defaultAccount?.params?.audioVideoConferenceFactoryAddress != null
 
-        coreThread.postDelayed({ startCore() }, 50)
+        coreThread.postDelayed({
+            startCore()
+            ManagedConfiguration.applyMdmConfigToCore(context, core)
+        }, 50)
 
         Looper.loop()
     }
