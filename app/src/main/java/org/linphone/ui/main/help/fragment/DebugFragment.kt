@@ -25,13 +25,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import java.io.File
 import org.linphone.R
 import org.linphone.core.tools.Log
 import org.linphone.databinding.HelpDebugFragmentBinding
 import org.linphone.ui.GenericActivity
-import org.linphone.ui.assistant.AssistantActivity
 import org.linphone.ui.fileviewer.FileViewerActivity
 import org.linphone.ui.main.MainActivity
 import org.linphone.ui.main.fragment.GenericMainFragment
@@ -88,47 +89,41 @@ class DebugFragment : GenericMainFragment() {
         }
 
         viewModel.uploadDebugLogsFinishedEvent.observe(viewLifecycleOwner) {
-            it.consume { url ->
-                if (requireActivity() is AssistantActivity) {
-                    AppUtils.copyToClipboard(requireContext(), "Logs upload URL", url)
+            it.consume { filePath ->
+                val file = File(filePath)
+                if (!file.exists()) {
+                    Log.e("[Debug Fragment] Compressed log file not found at [$filePath]")
+                    (requireActivity() as GenericActivity).showRedToast(
+                        getString(R.string.help_troubleshooting_debug_logs_upload_error_toast_message),
+                        R.drawable.warning_circle
+                    )
                     return@consume
                 }
 
-                val appName = requireContext().getString(R.string.app_name)
-                val intent = Intent(Intent.ACTION_SEND)
-                intent.putExtra(
-                    Intent.EXTRA_EMAIL,
-                    arrayOf(
-                        requireContext().getString(
-                            R.string.help_advanced_send_debug_logs_email_address
-                        )
-                    )
+                val publicUri = FileProvider.getUriForFile(
+                    requireContext(),
+                    getString(R.string.file_provider),
+                    file
                 )
-                intent.putExtra(Intent.EXTRA_SUBJECT, "$appName Logs")
-                intent.putExtra(Intent.EXTRA_TEXT, url)
-                intent.type = "text/plain"
+                Log.i("[Debug Fragment] Sharing compressed logs via URI [$publicUri]")
+
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    putExtra(Intent.EXTRA_STREAM, publicUri)
+                    putExtra(Intent.EXTRA_SUBJECT, "${getString(R.string.app_name)} Logs")
+                    type = "application/zip"
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
 
                 try {
                     requireContext().startActivity(
                         Intent.createChooser(
                             intent,
-                            requireContext().getString(
-                                R.string.help_troubleshooting_share_logs_dialog_title
-                            )
+                            getString(R.string.help_troubleshooting_share_logs_dialog_title)
                         )
                     )
                 } catch (ex: ActivityNotFoundException) {
                     Log.e(ex)
                 }
-            }
-        }
-
-        viewModel.uploadDebugLogsErrorEvent.observe(viewLifecycleOwner) {
-            it.consume {
-                (requireActivity() as GenericActivity).showRedToast(
-                    getString(R.string.help_troubleshooting_debug_logs_upload_error_toast_message),
-                    R.drawable.warning_circle
-                )
             }
         }
 

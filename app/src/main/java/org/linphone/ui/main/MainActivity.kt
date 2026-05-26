@@ -437,6 +437,10 @@ class MainActivity : GenericActivity() {
     override fun onResume() {
         super.onResume()
 
+        if (!navigatedToDefaultFragment && viewModel.mainIntentHandled) {
+            navigatedToDefaultFragment = true
+        }
+
         viewModel.enableAccountMonitoring(true)
         viewModel.updateMissingPermissionAlert()
         viewModel.updateAccountsAndNetworkReachability()

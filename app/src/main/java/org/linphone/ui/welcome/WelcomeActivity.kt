@@ -21,7 +21,6 @@ package org.linphone.ui.welcome
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
@@ -76,11 +75,6 @@ class WelcomeActivity : GenericActivity() {
 
         binding.dotsIndicator.attachTo(viewPager)
 
-        binding.setSkipClickListener {
-            Log.i("$TAG User clicked on 'skip' button, going to Assistant")
-            goToAssistant()
-        }
-
         binding.setNextClickListener {
             if (viewPager.currentItem == PAGES - 1) {
                 Log.i(
@@ -127,10 +121,8 @@ class WelcomeActivity : GenericActivity() {
             Log.i("$TAG Current page is [$position]")
             if (position == PAGES - 1) {
                 binding.next.text = AppUtils.getString(R.string.start)
-                binding.skip.visibility = View.INVISIBLE
             } else {
                 binding.next.text = AppUtils.getString(R.string.next)
-                binding.skip.visibility = View.VISIBLE
             }
         }
     }

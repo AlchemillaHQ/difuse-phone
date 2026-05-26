@@ -15,6 +15,9 @@
         <variable
             name="viewModel"
             type="org.linphone.ui.assistant.viewmodel.ThirdPartySipAccountLoginViewModel" />
+        <variable
+            name="scanQrClickListener"
+            type="View.OnClickListener" />
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -54,6 +57,19 @@
                     app:layout_constraintTop_toTopOf="@id/back"
                     app:layout_constraintBottom_toBottomOf="@id/back"
                     app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <ImageView
+                    style="@style/icon_top_bar_button_style"
+                    android:id="@+id/scan_qr"
+                    android:onClick="@{scanQrClickListener}"
+                    android:layout_width="@dimen/top_bar_height"
+                    android:layout_height="@dimen/top_bar_height"
+                    android:src="@drawable/qr_code"
+                    android:contentDescription="@string/content_description_scan_qr_code"
+                    app:tint="?attr/color_main2_500"
+                    app:layout_constraintTop_toTopOf="@id/back"
+                    app:layout_constraintBottom_toBottomOf="@id/back"
                     app:layout_constraintEnd_toEndOf="parent"/>
 
                 <!-- PBX username -->

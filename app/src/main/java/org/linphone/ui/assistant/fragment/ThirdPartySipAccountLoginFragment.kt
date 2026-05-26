@@ -26,6 +26,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.UiThread
+import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
@@ -76,6 +77,19 @@ class ThirdPartySipAccountLoginFragment : GenericFragment() {
 
         binding.setOutboundProxyTooltipClickListener {
             showOutboundProxyInfoDialog()
+        }
+
+        binding.setScanQrClickListener {
+            showQrCodeScanner()
+        }
+
+        setFragmentResultListener(QrCodeScannerDialogFragment.RESULT_KEY) { _, bundle ->
+            val username = bundle.getString("username") ?: return@setFragmentResultListener
+            val password = bundle.getString("password") ?: return@setFragmentResultListener
+            val upstreamHost = bundle.getString("upstreamHost") ?: return@setFragmentResultListener
+            val displayName = bundle.getString("displayName") ?: return@setFragmentResultListener
+            val upstreamTransport = bundle.getString("upstreamTransport") ?: "tls"
+            viewModel.populateFromQr(username, password, upstreamHost, displayName, upstreamTransport)
         }
 
         viewModel.showPassword.observe(viewLifecycleOwner) {
@@ -139,5 +153,9 @@ class ThirdPartySipAccountLoginFragment : GenericFragment() {
     private fun showOutboundProxyInfoDialog() {
         val dialog = DialogUtils.getAccountOutboundProxyHelpDialog(requireActivity())
         dialog.show()
+    }
+
+    private fun showQrCodeScanner() {
+        QrCodeScannerDialogFragment().show(parentFragmentManager, "QrCodeScannerDialog")
     }
 }

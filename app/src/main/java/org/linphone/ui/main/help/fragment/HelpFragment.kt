@@ -91,11 +91,6 @@ class HelpFragment : GenericMainFragment() {
             openUrlInBrowser(url)
         }
 
-        binding.setTranslateClickListener {
-            val url = getString(R.string.website_translate_weblate_url)
-            openUrlInBrowser(url)
-        }
-
         viewModel.newVersionAvailableEvent.observe(viewLifecycleOwner) {
             it.consume { pair ->
                 val version = pair.first

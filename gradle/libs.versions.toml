@@ -31,6 +31,8 @@ coil = "3.3.0"
 dotsIndicator = "5.1.0"
 photoview = "2.3.0"
 openidAppauth = "0.11.1"
+camerax = "1.4.1"
+mlkitBarcode = "17.3.0"
 linphone = "5.5.+"
 junit = "4.13.2"
 mockk = "1.13.13"
@@ -70,6 +72,12 @@ photoview = { group = "com.github.chrisbanes", name = "PhotoView", version.ref =
 openid-appauth = { group = "net.openid", name = "appauth", version.ref = "openidAppauth" }
 
 linphone = { group = "org.linphone", name = "linphone-sdk-android", version.ref = "linphone" }
+
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+google-mlkit-barcode = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcode" }
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }

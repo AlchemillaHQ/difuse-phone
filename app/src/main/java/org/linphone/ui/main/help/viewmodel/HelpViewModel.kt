@@ -25,12 +25,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.FirebaseApp
 import kotlinx.coroutines.launch
+import java.io.File
 import org.linphone.BuildConfig
 import org.linphone.LinphoneApplication.Companion.coreContext
 import org.linphone.LinphoneApplication.Companion.corePreferences
 import org.linphone.R
 import org.linphone.core.Core
 import org.linphone.core.CoreListenerStub
+import org.linphone.core.LogCollectionState
 import org.linphone.core.VersionUpdateCheckResult
 import org.linphone.core.tools.Log
 import org.linphone.ui.GenericViewModel
@@ -83,10 +85,6 @@ class HelpViewModel
         MutableLiveData<Event<String>>()
     }
 
-    val uploadDebugLogsErrorEvent: MutableLiveData<Event<Boolean>> by lazy {
-        MutableLiveData<Event<Boolean>>()
-    }
-
     val showConfigFileEvent: MutableLiveData<Event<String>> by lazy {
         MutableLiveData<Event<String>>()
     }
@@ -116,22 +114,6 @@ class HelpViewModel
                     Log.e("$TAG Can't check for update, an error happened [$result]")
                     errorEvent.postValue(Event(true))
                 }
-            }
-        }
-
-        @WorkerThread
-        override fun onLogCollectionUploadStateChanged(
-            core: Core,
-            state: Core.LogCollectionUploadState,
-            info: String
-        ) {
-            Log.i("$TAG Logs upload state changed [$state]")
-            if (state == Core.LogCollectionUploadState.Delivered) {
-                logsUploadInProgress.postValue(false)
-                uploadDebugLogsFinishedEvent.postValue(Event(info))
-            } else if (state == Core.LogCollectionUploadState.NotDelivered) {
-                logsUploadInProgress.postValue(false)
-                uploadDebugLogsErrorEvent.postValue(Event(true))
             }
         }
     }
@@ -166,7 +148,7 @@ class HelpViewModel
             core.addListener(coreListener)
 
             checkUpdateAvailable.postValue(corePreferences.checkForUpdateServerUrl.isNotEmpty())
-            uploadLogsAvailable.postValue(!core.logCollectionUploadServerUrl.isNullOrEmpty())
+            uploadLogsAvailable.postValue(core.logCollectionEnabled() == LogCollectionState.Enabled)
         }
     }
 
@@ -215,10 +197,25 @@ class HelpViewModel
 
     @UiThread
     fun shareLogs() {
+        logsUploadInProgress.postValue(true)
         coreContext.postOnCoreThread { core ->
-            Log.i("$TAG Uploading debug logs for sharing")
-            logsUploadInProgress.postValue(true)
-            core.uploadLogCollection()
+            Log.i("$TAG Compressing debug logs for sharing")
+            val compressedPath = core.compressLogCollection()
+            Log.i("$TAG Compressed log collection at path [$compressedPath]")
+            if (compressedPath.isNotEmpty()) {
+                val compressedFile = File(compressedPath)
+                val renamedFile = File(compressedFile.parentFile, "difuse_phone_log.gz")
+                if (compressedFile.renameTo(renamedFile)) {
+                    Log.i("$TAG Renamed compressed logs to [$renamedFile]")
+                    uploadDebugLogsFinishedEvent.postValue(Event(renamedFile.absolutePath))
+                } else {
+                    uploadDebugLogsFinishedEvent.postValue(Event(compressedPath))
+                }
+            } else {
+                Log.e("$TAG compressLogCollection returned empty path")
+                showRedToast(R.string.help_troubleshooting_debug_logs_upload_error_toast_message, R.drawable.warning_circle)
+            }
+            logsUploadInProgress.postValue(false)
         }
     }
 

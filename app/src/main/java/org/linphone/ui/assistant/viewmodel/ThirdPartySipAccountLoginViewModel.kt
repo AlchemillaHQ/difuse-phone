@@ -63,6 +63,8 @@ class ThirdPartySipAccountLoginViewModel
     /** PBX SIP server hostname. */
     val upstreamHost = MutableLiveData<String>()
 
+    val upstreamTransport = MutableLiveData<String>()
+
     val internationalPrefix = MutableLiveData<String>()
 
     val internationalPrefixIsoCountryCode = MutableLiveData<String>()
@@ -161,6 +163,7 @@ class ThirdPartySipAccountLoginViewModel
     fun login() {
         coreContext.postOnCoreThread { core ->
             core.loadConfigFromXml(corePreferences.thirdPartyDefaultValuesPath)
+            core.isIpv6Enabled = false
 
             // Allow to enter SIP identity instead of simply username
             var user = username.value.orEmpty().trim()
@@ -213,11 +216,12 @@ class ThirdPartySipAccountLoginViewModel
             corePreferences.difuseUpstreamUser = user
             corePreferences.difuseUpstreamPassword = passwordValue
             corePreferences.difuseUpstreamRealm = upstreamHostName
-            corePreferences.difuseUpstreamTransport = "tls"
+            corePreferences.difuseUpstreamTransport = upstreamTransport.value ?: "tls"
             corePreferences.difuseUpstreamPort = upstreamPort
             corePreferences.difuseDisplayName = sipDisplayName
 
             registrationInProgress.postValue(true)
+            val transportType = parseTransportType(upstreamTransport.value ?: "tls")
             if (pushToken.isEmpty()) {
                 Log.w("$TAG Push token is not available yet, continuing with direct PBX account and deferring Difuse registration")
                 val created = createAccountsAndStartRegistration(
@@ -228,6 +232,7 @@ class ThirdPartySipAccountLoginViewModel
                     userId = userId,
                     passwordValue = passwordValue,
                     b2buaSipUri = null,
+                    transportType = transportType,
                 )
                 if (!created) {
                     registrationInProgress.postValue(false)
@@ -241,7 +246,7 @@ class ThirdPartySipAccountLoginViewModel
                     pushToken = pushToken,
                     upstreamHost = upstreamHostName,
                     upstreamPort = upstreamPort,
-                    upstreamTransport = "tls",
+                    upstreamTransport = upstreamTransport.value ?: "tls",
                     upstreamUser = user,
                     upstreamPassword = passwordValue,
                     upstreamRealm = upstreamHostName,
@@ -288,6 +293,7 @@ class ThirdPartySipAccountLoginViewModel
                         userId = userId,
                         passwordValue = passwordValue,
                         b2buaSipUri = registerResult.b2buaSipUri,
+                        transportType = transportType,
                     )
                     if (!created) {
                         registrationInProgress.postValue(false)
@@ -306,6 +312,7 @@ class ThirdPartySipAccountLoginViewModel
         userId: String,
         passwordValue: String,
         b2buaSipUri: String?,
+        transportType: TransportType,
     ): Boolean {
         newlyCreatedAuthInfo = Factory.instance().createAuthInfo(
             user,
@@ -322,7 +329,7 @@ class ThirdPartySipAccountLoginViewModel
         val difusePairId = UUID.randomUUID().toString()
         directParams.addCustomParam(DIFUSE_PAIR_ID_PARAM, difusePairId)
         val directServer = Factory.instance().createAddress("sip:$upstreamHostValue")
-        directServer?.transport = TransportType.Tls
+        directServer?.transport = transportType
         directParams.serverAddress = directServer
         directParams.pushNotificationAllowed = false // B2BUA handles push wakeup
 
@@ -335,6 +342,8 @@ class ThirdPartySipAccountLoginViewModel
                 directParams.internationalPrefixIsoCountryCode = isoCountryCode
             }
         }
+
+        configureDifuseNatPolicy(core, directParams, upstreamHostValue, user, passwordValue)
 
         newlyCreatedAccount = core.createAccount(directParams)
         Log.i("$TAG Created direct PBX account [${directIdentity.asStringUriOnly()}]")
@@ -386,6 +395,16 @@ class ThirdPartySipAccountLoginViewModel
         expandAdvancedSettings.value = expandAdvancedSettings.value == false
     }
 
+    @UiThread
+    fun populateFromQr(username: String, password: String, upstreamHost: String, displayName: String, upstreamTransport: String) {
+        this.username.value = username
+        this.password.value = password
+        this.upstreamHost.value = upstreamHost
+        this.displayName.value = displayName
+        this.upstreamTransport.value = upstreamTransport
+        Log.i("$TAG Form populated from QR: user=[$username] host=[$upstreamHost] transport=[$upstreamTransport]")
+    }
+
     @WorkerThread
     private fun getOrCreateDifuseDeviceId(): String {
         val stored = corePreferences.difuseDeviceId
@@ -394,6 +413,49 @@ class ThirdPartySipAccountLoginViewModel
         val generated = UUID.randomUUID().toString()
         corePreferences.difuseDeviceId = generated
         return generated
+    }
+
+    @WorkerThread
+    private fun configureDifuseNatPolicy(
+        core: Core,
+        params: org.linphone.core.AccountParams,
+        upstreamHostValue: String,
+        user: String,
+        passwordValue: String
+    ) {
+        val hostname = upstreamHostValue
+            .removePrefix("sip:")
+            .removePrefix("sips:")
+            .substringBefore(":")
+        if (!hostname.endsWith(".difusedns.com", ignoreCase = true)) return
+
+        Log.i("$TAG Configuring NAT policy for difuse PBX at [$hostname]")
+        val natPolicy = core.createNatPolicy()
+        natPolicy.isStunEnabled = true
+        natPolicy.isIceEnabled = true
+        natPolicy.isTurnEnabled = true
+        natPolicy.stunServer = "turn:$hostname:3478"
+        natPolicy.stunServerUsername = user
+        params.natPolicy = natPolicy
+
+        val turnAuthInfo = Factory.instance().createAuthInfo(
+            user,
+            null,
+            passwordValue,
+            null,
+            null,
+            null
+        )
+        core.addAuthInfo(turnAuthInfo)
+        Log.i("$TAG TURN configured: server=[turn:$hostname:3478] user=[$user]")
+    }
+
+    private fun parseTransportType(transport: String): TransportType {
+        return when (transport.lowercase()) {
+            "tcp" -> TransportType.Tcp
+            "udp" -> TransportType.Udp
+            else -> TransportType.Tls
+        }
     }
 
 }
