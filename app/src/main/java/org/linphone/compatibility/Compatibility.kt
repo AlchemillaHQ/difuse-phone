@@ -65,6 +65,14 @@ class Compatibility {
             }
         }
 
+        fun startForegroundService(context: Context, intent: Intent) {
+            if (Version.sdkAboveOrEqual(Version.API26_O_80)) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        }
+
         fun setBlurRenderEffect(view: View) {
             if (Version.sdkAboveOrEqual(Version.API31_ANDROID_12)) {
                 Api31Compatibility.setBlurRenderEffect(view)

@@ -23,6 +23,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import org.linphone.LinphoneApplication.Companion.coreContext
+import org.linphone.compatibility.Compatibility
 import org.linphone.core.tools.Log
 import org.linphone.utils.LinphoneUtils
 import org.linphone.utils.LinphoneUtils.Companion.isPushOnly
@@ -49,6 +50,13 @@ class CorePushReceiver : BroadcastReceiver() {
         logExtrasDump(extras)
         Log.e("$TAG ===================== PUSH RECEIVED (END) =====================")
 
+        // Start CorePushService to keep app alive while we wait for INVITE
+        val serviceIntent = Intent(context, CorePushService::class.java)
+        if (extras != null) {
+            serviceIntent.putExtras(extras)
+        }
+        Compatibility.startForegroundService(context, serviceIntent)
+
         coreContext.postOnCoreThread { core ->
             if (callerUri != null && isCallerAlreadyRinging(core, callerUri)) {
                 Log.i("$TAG Ignoring duplicate push for caller [$callerUri] because app is already ringing")
@@ -57,8 +65,8 @@ class CorePushReceiver : BroadcastReceiver() {
 
             var triggered = 0
             for (account in core.accountList) {
-                if (!account.isPushOnly()) continue
-
+                // Refresh ALL accounts, not just push-only ones, to ensure we pick up the INVITE.
+                // The push-only (shadow) account wakes the app, but the INVITE comes on the main account.
                 val params = account.params
                 if (!params.isRegisterEnabled) {
                     val clone = params.clone()
@@ -69,24 +77,26 @@ class CorePushReceiver : BroadcastReceiver() {
                 account.refreshRegister()
                 triggered += 1
 
-                // Keep REGISTER enabled only for a short wake window.
-                coreContext.postOnCoreThreadDelayed({
-                    if (!core.accountList.contains(account)) {
-                        return@postOnCoreThreadDelayed
-                    }
-                    val latest = account.params
-                    if (latest.isRegisterEnabled) {
-                        val clone = latest.clone()
-                        clone.isRegisterEnabled = false
-                        account.params = clone
-                    }
-                }, PUSH_REGISTER_WINDOW_MS)
+                if (account.isPushOnly()) {
+                    // Keep REGISTER enabled only for a short wake window for shadow accounts.
+                    coreContext.postOnCoreThreadDelayed({
+                        if (!core.accountList.contains(account)) {
+                            return@postOnCoreThreadDelayed
+                        }
+                        val latest = account.params
+                        if (latest.isRegisterEnabled) {
+                            val clone = latest.clone()
+                            clone.isRegisterEnabled = false
+                            account.params = clone
+                        }
+                    }, PUSH_REGISTER_WINDOW_MS)
+                }
             }
 
             if (triggered == 0) {
-                Log.w("$TAG No push-only account configured, nothing to REGISTER")
+                Log.w("$TAG No account configured, nothing to REGISTER")
             } else {
-                Log.i("$TAG Triggered temporary REGISTER for [$triggered] push-only account(s)")
+                Log.i("$TAG Triggered temporary REGISTER for [$triggered] account(s)")
             }
 
             if (extras != null) {

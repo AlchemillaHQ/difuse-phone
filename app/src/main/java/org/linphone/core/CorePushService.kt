@@ -35,6 +35,8 @@ class CorePushService : PushService() {
         private const val TAG = "[Core Push Service]"
     }
 
+    private var callerName: String? = null
+
     override fun onCreate() {
         super.onCreate()
         Log.i("$TAG Created")
@@ -42,6 +44,9 @@ class CorePushService : PushService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i("$TAG onStartCommand")
+        if (intent != null) {
+            callerName = intent.getStringExtra("caller_name") ?: intent.getStringExtra("from-name")
+        }
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -71,12 +76,18 @@ class CorePushService : PushService() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val message = if (callerName != null) {
+            getString(R.string.call_audio_incoming_for_account, callerName)
+        } else {
+            getString(R.string.notification_push_received_message)
+        }
+
         mServiceNotification = NotificationCompat.Builder(
             this,
             SERVICE_NOTIFICATION_CHANNEL_ID
         )
             .setContentTitle(getString(R.string.notification_push_received_title))
-            .setContentText(getString(R.string.notification_push_received_message))
+            .setContentText(message)
             .setSmallIcon(R.drawable.linphone_notification)
             .setAutoCancel(false)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)

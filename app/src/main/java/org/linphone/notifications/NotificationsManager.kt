@@ -792,7 +792,14 @@ class NotificationsManager
     @WorkerThread
     private fun showIncomingCallForegroundServiceNotification(notification: Notification) {
         Log.i("$TAG Trying to start foreground Service using incoming call notification")
-        val service = inCallService
+        var service = inCallService
+        if (service == null) {
+            Log.w("$TAG Core Foreground Service hasn't started yet, starting it")
+            val intent = Intent(context, CoreInCallService::class.java)
+            Compatibility.startForegroundService(context, intent)
+            service = inCallService
+        }
+
         if (service != null) {
             if (Compatibility.isPostNotificationsPermissionGranted(context)) {
                 Log.i(
@@ -836,7 +843,14 @@ class NotificationsManager
         }
 
         Log.i("$TAG Trying to start/update foreground Service using call notification")
-        val service = inCallService
+        var service = inCallService
+        if (service == null) {
+            Log.w("$TAG Core Foreground Service hasn't started yet, starting it")
+            val intent = Intent(context, CoreInCallService::class.java)
+            Compatibility.startForegroundService(context, intent)
+            service = inCallService
+        }
+
         if (service == null) {
             Log.w("$TAG Core Foreground Service hasn't started yet...")
             return
