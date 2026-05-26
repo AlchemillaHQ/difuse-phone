@@ -399,7 +399,7 @@ class CorePreferences
 
     @get:AnyThread @set:WorkerThread
     var themeMainColor: String
-        get() = config.getString("ui", "theme_main_color", "orange")!!
+        get() = config.getString("ui", "theme_main_color", "difuse")!!
         set(value) {
             config.setString("ui", "theme_main_color", value)
         }

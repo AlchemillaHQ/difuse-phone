@@ -889,6 +889,7 @@
     <string name="red">Red</string>
     <string name="pink">Pink</string>
     <string name="purple">Purple</string>
+    <string name="difuse">Difuse</string>
 
     <!-- Misc -->
     <string name="list_filter_no_result_found">No result found…</string>

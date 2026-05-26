@@ -176,7 +176,8 @@ class SettingsViewModel
         AppUtils.getString(R.string.blue),
         AppUtils.getString(R.string.red),
         AppUtils.getString(R.string.pink),
-        AppUtils.getString(R.string.purple)
+        AppUtils.getString(R.string.purple),
+        AppUtils.getString(R.string.difuse)
     )
     val availableColorsValues = arrayListOf(
         "orange",
@@ -185,7 +186,8 @@ class SettingsViewModel
         "blue",
         "red",
         "pink",
-        "purple"
+        "purple",
+        "difuse"
     )
 
     // Tunnel settings

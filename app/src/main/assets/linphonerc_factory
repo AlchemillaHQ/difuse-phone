@@ -65,5 +65,10 @@ assistant_third_party_sip_account_transport=tls
 assistant_go_directly_to_third_party_sip_account_login=1
 assistant_hide_create_account=1
 assistant_disable_qr_code=1
+disable_chat_feature=1
+disable_meetings_feature=1
+only_display_sip_uri_username=1
+hide_sip_addresses=1
+change_main_color_allowed=1
 
 ## End of factory rc

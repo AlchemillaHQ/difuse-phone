@@ -95,4 +95,10 @@
     <color name="purple_main_300">#FF99FF</color>
     <color name="purple_main_500">#800080</color>
     <color name="purple_main_700">#520052</color>
+
+    <color name="difuse_main_100">#DDE3F0</color>
+    <color name="difuse_main_100_alpha_50">#80DDE3F0</color>
+    <color name="difuse_main_300">#9AABCC</color>
+    <color name="difuse_main_500">#586ea1</color>
+    <color name="difuse_main_700">#3C4E76</color>
 </resources>

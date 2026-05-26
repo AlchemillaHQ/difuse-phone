@@ -137,4 +137,13 @@
         <item name="color_main1_700">@color/purple_main_700</item>
         <item name="color_chat_bubble_outgoing">@color/gray_main2_700</item>
     </style>
+
+    <style name="Theme.LinphoneDifuse" parent="Theme.Linphone">
+        <item name="color_main1_100">@color/difuse_main_100</item>
+        <item name="color_main1_100_alpha_50">@color/difuse_main_100_alpha_50</item>
+        <item name="color_main1_300">@color/difuse_main_300</item>
+        <item name="color_main1_500">@color/difuse_main_500</item>
+        <item name="color_main1_700">@color/difuse_main_700</item>
+        <item name="color_chat_bubble_outgoing">@color/gray_main2_700</item>
+    </style>
 </resources>

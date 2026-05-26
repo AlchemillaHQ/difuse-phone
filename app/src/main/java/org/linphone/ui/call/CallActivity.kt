@@ -120,6 +120,7 @@ class CallActivity : GenericActivity() {
             "red" -> theme.applyStyle(R.style.Theme_LinphoneInCallRed, true)
             "pink" -> theme.applyStyle(R.style.Theme_LinphoneInCallPink, true)
             "purple" -> theme.applyStyle(R.style.Theme_LinphoneInCallPurple, true)
+            "difuse" -> theme.applyStyle(R.style.Theme_LinphoneInCallDifuse, true)
             else -> theme.applyStyle(R.style.Theme_LinphoneInCall, true)
         }
         return theme
