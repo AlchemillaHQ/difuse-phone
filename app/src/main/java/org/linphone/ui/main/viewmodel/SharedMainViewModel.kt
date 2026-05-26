@@ -62,6 +62,10 @@ class SharedMainViewModel
         MutableLiveData<Event<Boolean>>()
     }
 
+    val navigateToDialerEvent: MutableLiveData<Event<Boolean>> by lazy {
+        MutableLiveData<Event<Boolean>>()
+    }
+
     var currentlyDisplayedFragment = MutableLiveData<Int>()
 
     // Top bar related

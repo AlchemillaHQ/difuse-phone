@@ -33,8 +33,27 @@
             android:text="@string/bottom_navigation_contacts_label"
             textFont="@{viewModel.contactsSelected ? NotoSansFont.NotoSansBold : NotoSansFont.NotoSansRegular}"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/calls"
+            app:layout_constraintEnd_toStartOf="@id/dialer"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            style="@style/bottom_nav_bar_label_style"
+            android:id="@+id/dialer"
+            android:onClick="@{() -> viewModel.navigateToDialer()}"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingTop="9dp"
+            android:paddingBottom="8dp"
+            android:drawableTop="@drawable/numpad"
+            android:background="@drawable/squircle_transparent_button_background"
+            android:drawablePadding="4dp"
+            android:drawableTint="@{viewModel.dialerSelected ? @color/main1_500 : @color/main2_600, default=@color/main2_600}"
+            android:text="@string/bottom_navigation_dialer_label"
+            textFont="@{viewModel.dialerSelected ? NotoSansFont.NotoSansBold : NotoSansFont.NotoSansRegular}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/calls"
+            app:layout_constraintStart_toEndOf="@id/contacts"
             app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -53,7 +72,7 @@
             textFont="@{viewModel.callsSelected ? NotoSansFont.NotoSansBold : NotoSansFont.NotoSansRegular}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/conversations"
-            app:layout_constraintStart_toEndOf="@id/contacts"
+            app:layout_constraintStart_toEndOf="@id/dialer"
             app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.appcompat.widget.AppCompatTextView

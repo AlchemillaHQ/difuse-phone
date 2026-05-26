@@ -86,6 +86,7 @@ class MainActivity : GenericActivity() {
 
         private const val DEFAULT_FRAGMENT_KEY = "default_fragment"
         private const val CONTACTS_FRAGMENT_ID = 1
+        private const val DIALER_FRAGMENT_ID = 5
         private const val HISTORY_FRAGMENT_ID = 2
         private const val CHAT_FRAGMENT_ID = 3
         private const val MEETINGS_FRAGMENT_ID = 4
@@ -413,6 +414,9 @@ class MainActivity : GenericActivity() {
             R.id.contactsListFragment -> {
                 CONTACTS_FRAGMENT_ID
             }
+            R.id.dialerListFragment -> {
+                DIALER_FRAGMENT_ID
+            }
             R.id.historyListFragment -> {
                 HISTORY_FRAGMENT_ID
             }
@@ -518,6 +522,14 @@ class MainActivity : GenericActivity() {
                         findNavController().addOnDestinationChangedListener(destinationListener)
                         findNavController().navigate(
                             R.id.contactsListFragment,
+                            args,
+                            navOptions
+                        )
+                    }
+                    DIALER_FRAGMENT_ID -> {
+                        findNavController().addOnDestinationChangedListener(destinationListener)
+                        findNavController().navigate(
+                            R.id.dialerListFragment,
                             args,
                             navOptions
                         )
@@ -662,6 +674,17 @@ class MainActivity : GenericActivity() {
                                     navOptionsBuilder.setLaunchSingleTop(true)
                                     findNavController().navigate(
                                         R.id.contactsListFragment,
+                                        bundleOf(),
+                                        navOptionsBuilder.build()
+                                    )
+                                }
+                                DIALER_FRAGMENT_ID -> {
+                                    Log.i("$TAG Navigating to dialer fragment as default")
+                                    val navOptionsBuilder = NavOptions.Builder()
+                                    navOptionsBuilder.setPopUpTo(R.id.historyListFragment, true)
+                                    navOptionsBuilder.setLaunchSingleTop(true)
+                                    findNavController().navigate(
+                                        R.id.dialerListFragment,
                                         bundleOf(),
                                         navOptionsBuilder.build()
                                     )
