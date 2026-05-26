@@ -156,15 +156,15 @@ class DialerListFragment : AbstractMainFragment() {
         }, backspaceRepeatDelay)
     }
 
-    private fun updateTextSize(digitCount: Int) {
+   private fun updateTextSize(digitCount: Int) {
     val size = when {
-        digitCount <= 3 -> 52f
-        digitCount <= 6 -> 46f
-        digitCount <= 9 -> 40f
-        digitCount <= 12 -> 34f
-        digitCount <= 16 -> 28f
-        digitCount <= 20 -> 24f
-        else -> 20f
+        digitCount <= 4 -> 52f
+        digitCount <= 8 -> 48f
+        digitCount <= 12 -> 42f
+        digitCount <= 16 -> 36f
+        digitCount <= 22 -> 32f
+        digitCount <= 28 -> 28f
+        else -> 24f
     }
 
     binding.displayNumber.setTextSize(
