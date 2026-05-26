@@ -447,7 +447,8 @@ class ThirdPartySipAccountLoginViewModel
             null
         )
         core.addAuthInfo(turnAuthInfo)
-        Log.i("$TAG TURN configured: server=[$hostname:3478] user=[$user] realm=[$hostname]")
+        core.isForcedIceRelayEnabled = true
+        Log.i("$TAG TURN configured: server=[$hostname:3478] user=[$user] realm=[$hostname] forcedRelay=true")
     }
 
     private fun parseTransportType(transport: String): TransportType {
