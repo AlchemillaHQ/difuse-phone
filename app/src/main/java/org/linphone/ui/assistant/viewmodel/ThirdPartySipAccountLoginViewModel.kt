@@ -434,7 +434,7 @@ class ThirdPartySipAccountLoginViewModel
         natPolicy.isStunEnabled = true
         natPolicy.isIceEnabled = true
         natPolicy.isTurnEnabled = true
-        natPolicy.stunServer = "turn:$hostname:3478"
+        natPolicy.stunServer = "$hostname:3478"
         natPolicy.stunServerUsername = user
         params.natPolicy = natPolicy
 
@@ -443,11 +443,11 @@ class ThirdPartySipAccountLoginViewModel
             null,
             passwordValue,
             null,
-            null,
+            hostname,
             null
         )
         core.addAuthInfo(turnAuthInfo)
-        Log.i("$TAG TURN configured: server=[turn:$hostname:3478] user=[$user]")
+        Log.i("$TAG TURN configured: server=[$hostname:3478] user=[$user] realm=[$hostname]")
     }
 
     private fun parseTransportType(transport: String): TransportType {
