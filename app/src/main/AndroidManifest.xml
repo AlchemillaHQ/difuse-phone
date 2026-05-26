@@ -235,6 +235,13 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name=".core.DifuseAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="org.linphone.core.action.DIFUSE_HEARTBEAT" />
+            </intent-filter>
+        </receiver>
+
         <!-- Providers -->
 
         <provider

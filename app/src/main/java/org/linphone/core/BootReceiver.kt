@@ -19,6 +19,8 @@
  */
 package org.linphone.core
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -28,6 +30,7 @@ import org.linphone.core.tools.Log
 class BootReceiver : BroadcastReceiver() {
     companion object {
         private const val TAG = "[Boot Receiver]"
+        private const val DIFUSE_HEARTBEAT_INTERVAL_MS = 30 * 60 * 1000L
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -42,5 +45,34 @@ class BootReceiver : BroadcastReceiver() {
             )
         }
         // Starting the keep alive service will be done by CoreContext directly
+
+        scheduleDifuseHeartbeatIfNeeded(context)
+    }
+
+    private fun scheduleDifuseHeartbeatIfNeeded(context: Context) {
+        val deviceId = corePreferences.difuseDeviceId
+        if (deviceId.isEmpty()) {
+            Log.i("$TAG No Difuse device ID, skipping heartbeat scheduling on boot")
+            return
+        }
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val heartbeatIntent = Intent(CoreContext.ACTION_DIFUSE_HEARTBEAT).apply {
+            setPackage(context.packageName)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            heartbeatIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        alarmManager.setInexactRepeating(
+            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            DIFUSE_HEARTBEAT_INTERVAL_MS,
+            DIFUSE_HEARTBEAT_INTERVAL_MS,
+            pendingIntent
+        )
+        Log.i("$TAG Difuse heartbeat re-scheduled on boot for device [$deviceId]")
     }
 }

@@ -224,7 +224,6 @@ class ThirdPartySipAccountLoginViewModel
                     core = core,
                     directIdentity = directIdentity,
                     upstreamHostValue = upstreamHostValue,
-                    upstreamHostName = upstreamHostName,
                     user = user,
                     userId = userId,
                     passwordValue = passwordValue,
@@ -285,7 +284,6 @@ class ThirdPartySipAccountLoginViewModel
                         core = core,
                         directIdentity = directIdentity,
                         upstreamHostValue = upstreamHostValue,
-                        upstreamHostName = upstreamHostName,
                         user = user,
                         userId = userId,
                         passwordValue = passwordValue,
@@ -304,7 +302,6 @@ class ThirdPartySipAccountLoginViewModel
         core: Core,
         directIdentity: org.linphone.core.Address,
         upstreamHostValue: String,
-        upstreamHostName: String,
         user: String,
         userId: String,
         passwordValue: String,
@@ -312,11 +309,11 @@ class ThirdPartySipAccountLoginViewModel
     ): Boolean {
         newlyCreatedAuthInfo = Factory.instance().createAuthInfo(
             user,
-            userId,
+            userId.ifEmpty { null },
             passwordValue,
             null,
             null,
-            upstreamHostName
+            null
         )
         core.addAuthInfo(newlyCreatedAuthInfo)
 

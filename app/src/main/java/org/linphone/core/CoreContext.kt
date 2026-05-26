@@ -20,6 +20,7 @@
 package org.linphone.core
 
 import android.annotation.SuppressLint
+import android.app.AlarmManager
 import android.app.Application
 import android.app.PendingIntent
 import android.content.Context
@@ -66,7 +67,9 @@ class CoreContext
     constructor(val context: Context) : HandlerThread("Core Thread") {
     companion object {
         private const val TAG = "[Core Context]"
-        private const val PUSH_REGISTER_WINDOW_MS = 2 * 60 * 1000L
+        private const val PUSH_REGISTER_WINDOW_MS = 60 * 1000L
+        private const val DIFUSE_HEARTBEAT_INTERVAL_MS = 30 * 60 * 1000L
+        const val ACTION_DIFUSE_HEARTBEAT = "org.linphone.core.action.DIFUSE_HEARTBEAT"
         private const val PUSH_REGISTER_RETRY_INTERVAL_MS = 1500L
         private const val PUSH_REGISTER_RETRY_ATTEMPTS = 8
         private const val DIFUSE_PUSH_ONLY_PARAM = "difuse_push_only"
@@ -527,7 +530,8 @@ class CoreContext
                     }
 
                     val accountFound = core.accountList.find {
-                        it.params.identityAddress?.username == authInfo.username && it.params.identityAddress?.domain == authInfo.domain
+                        val identity = it.params.identityAddress
+                        identity?.username == authInfo.username && (identity?.domain == authInfo.domain || it.params.serverAddress?.domain == authInfo.domain)
                     }
                     if (accountFound == null) {
                         Log.w(
@@ -751,9 +755,11 @@ class CoreContext
 
         // Ensure every account's proxy uses TLS — fixes accounts saved before this was enforced
         enforceTlsOnAllAccounts()
+        DifuseApi.baseUrl = corePreferences.difuseApiBaseUrl
         refreshDifusePushTokenIfNeeded()
         registerDifuseDeviceIfNeeded()
         checkDifuseUpstreamRegistrationIfNeeded()
+        scheduleDifuseHeartbeat()
 
         if (corePreferences.keepServiceAlive) {
             if (activityMonitor.isInForeground() || corePreferences.autoStart) {
@@ -1130,6 +1136,50 @@ class CoreContext
     }
 
     @WorkerThread
+    fun scheduleDifuseHeartbeat() {
+        val deviceId = corePreferences.difuseDeviceId
+        if (deviceId.isEmpty()) {
+            Log.i("$TAG No Difuse device ID, skipping heartbeat scheduling")
+            return
+        }
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(ACTION_DIFUSE_HEARTBEAT).apply {
+            setPackage(context.packageName)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        alarmManager.setInexactRepeating(
+            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            DIFUSE_HEARTBEAT_INTERVAL_MS,
+            DIFUSE_HEARTBEAT_INTERVAL_MS,
+            pendingIntent
+        )
+        Log.i("$TAG Difuse heartbeat scheduled every 30 minutes for device [$deviceId]")
+    }
+
+    @WorkerThread
+    fun cancelDifuseHeartbeat() {
+        val intent = Intent(ACTION_DIFUSE_HEARTBEAT).apply {
+            setPackage(context.packageName)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        alarmManager.cancel(pendingIntent)
+        Log.i("$TAG Difuse heartbeat alarm cancelled")
+    }
+
+    @WorkerThread
     fun startKeepAliveService() {
         if (keepAliveServiceStarted) {
             Log.w("$TAG Keep alive service already started, skipping")
@@ -1257,6 +1307,11 @@ class CoreContext
                 corePreferences.difusePushToken = token
             }
         }
+    }
+
+    @WorkerThread
+    fun checkDifuseUpstreamRegistrationIfNeededHeartbeat() {
+        checkDifuseUpstreamRegistrationIfNeeded()
     }
 
     @WorkerThread

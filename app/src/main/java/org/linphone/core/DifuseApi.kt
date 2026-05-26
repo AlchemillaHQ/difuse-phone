@@ -28,8 +28,10 @@ import org.linphone.core.tools.Log
 
 object DifuseApi {
     private const val TAG = "[Difuse API]"
-    private const val BASE_URL = "https://headscale.alchemilla.io"
     private const val JSON_CONTENT_TYPE = "application/json"
+
+    @Volatile
+    var baseUrl: String = "https://b2bua.difuse.io"
 
     data class RegisterResult(
         val statusCode: Int,
@@ -85,7 +87,7 @@ object DifuseApi {
 
         return try {
             val response = executeJsonRequest(
-                endpoint = "$BASE_URL/v1/devices/register",
+                endpoint = "$baseUrl/v1/devices/register",
                 method = "POST",
                 payload = payload,
             )
@@ -107,7 +109,7 @@ object DifuseApi {
 
             val success = try {
                 val response = executeJsonRequest(
-                    endpoint = "$BASE_URL/v1/devices/$encodedDeviceId/refresh",
+                    endpoint = "$baseUrl/v1/devices/$encodedDeviceId/refresh",
                     method = "PUT",
                     payload = payload,
                 )
@@ -130,7 +132,7 @@ object DifuseApi {
             val encodedDeviceId = encodePathSegment(deviceId)
             val result = try {
                 val response = executeJsonRequest(
-                    endpoint = "$BASE_URL/v1/devices/$encodedDeviceId/status",
+                    endpoint = "$baseUrl/v1/devices/$encodedDeviceId/status",
                     method = "GET",
                     payload = null,
                 )
@@ -164,7 +166,7 @@ object DifuseApi {
             val encodedDeviceId = encodePathSegment(deviceId)
             val result = try {
                 val response = executeJsonRequest(
-                    endpoint = "$BASE_URL/v1/devices/$encodedDeviceId/reregister",
+                    endpoint = "$baseUrl/v1/devices/$encodedDeviceId/reregister",
                     method = "POST",
                     payload = null,
                 )
@@ -191,7 +193,7 @@ object DifuseApi {
             val encodedDeviceId = encodePathSegment(deviceId)
             val success = try {
                 val response = executeJsonRequest(
-                    endpoint = "$BASE_URL/v1/devices/$encodedDeviceId",
+                    endpoint = "$baseUrl/v1/devices/$encodedDeviceId",
                     method = "DELETE",
                     payload = null,
                 )

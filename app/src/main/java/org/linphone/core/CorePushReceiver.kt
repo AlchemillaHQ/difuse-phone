@@ -30,7 +30,7 @@ import org.linphone.utils.LinphoneUtils.Companion.isPushOnly
 class CorePushReceiver : BroadcastReceiver() {
     companion object {
         private const val TAG = "[Push Notification]"
-        private const val PUSH_REGISTER_WINDOW_MS = 2 * 60 * 1000L
+        private const val PUSH_REGISTER_WINDOW_MS = 60 * 1000L
     }
 
     override fun onReceive(context: Context, intent: Intent) {

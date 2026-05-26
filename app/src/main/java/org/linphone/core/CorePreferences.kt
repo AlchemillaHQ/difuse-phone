@@ -118,6 +118,13 @@ class CorePreferences
         }
 
     @get:AnyThread @set:WorkerThread
+    var difuseApiBaseUrl: String
+        get() = config.getString("app", "difuse_api_base_url", "https://b2bua.difuse.io").orEmpty().trim()
+        set(value) {
+            config.setString("app", "difuse_api_base_url", value.trim())
+        }
+
+    @get:AnyThread @set:WorkerThread
     var difuseDeviceId: String
         get() = config.getString("app", "difuse_device_id", "").orEmpty().trim()
         set(value) {
