@@ -91,6 +91,20 @@ class DialerListFragment : AbstractMainFragment() {
 
         listViewModel.digits.observe(viewLifecycleOwner) { digits ->
             updateTextSize(digits?.length ?: 0)
+           binding.displayNumberScroll.post {
+            val child = binding.displayNumber
+            val scrollWidth = binding.displayNumberScroll.width
+            val textWidth = child.width
+
+            if (textWidth > scrollWidth) {
+                binding.displayNumberScroll.smoothScrollTo(
+                    textWidth - scrollWidth,
+                    0
+                )
+            } else {
+                binding.displayNumberScroll.scrollTo(0, 0)
+            }
+        }
         }
 
         observeToastEvents(listViewModel)
@@ -143,15 +157,19 @@ class DialerListFragment : AbstractMainFragment() {
     }
 
     private fun updateTextSize(digitCount: Int) {
-        val size = when {
-            digitCount <= 3 -> 56f
-            digitCount <= 5 -> 48f
-            digitCount <= 7 -> 40f
-            digitCount <= 10 -> 34f
-            digitCount <= 14 -> 28f
-            digitCount <= 18 -> 22f
-            else -> 18f
-        }
-        binding.displayNumber.setTextSize(TypedValue.COMPLEX_UNIT_SP, size)
+    val size = when {
+        digitCount <= 3 -> 52f
+        digitCount <= 6 -> 46f
+        digitCount <= 9 -> 40f
+        digitCount <= 12 -> 34f
+        digitCount <= 16 -> 28f
+        digitCount <= 20 -> 24f
+        else -> 20f
     }
+
+    binding.displayNumber.setTextSize(
+        TypedValue.COMPLEX_UNIT_SP,
+        size
+    )
+}
 }
