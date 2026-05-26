@@ -104,6 +104,8 @@ class MainActivity : GenericActivity() {
 
     private var navigatedToDefaultFragment = false
 
+    private var pendingDefaultFragmentId = HISTORY_FRAGMENT_ID
+
     private val destinationListener = object : NavController.OnDestinationChangedListener {
         override fun onDestinationChanged(
             controller: NavController,
@@ -483,6 +485,14 @@ class MainActivity : GenericActivity() {
                     return
                 } else {
                     viewModel.mainIntentHandled = true
+                    pendingDefaultFragmentId = getPreferences(MODE_PRIVATE).getInt(
+                        DEFAULT_FRAGMENT_KEY,
+                        HISTORY_FRAGMENT_ID
+                    )
+                    Log.i(
+                        "$TAG Main intent first launch, deferring splash dismissal until account check is complete"
+                    )
+                    return
                 }
             }
 
@@ -606,10 +616,10 @@ class MainActivity : GenericActivity() {
                     }
                 }
             } else {
-                if (intent.hasExtra(ARGUMENTS_CHAT)) {
-                    Log.i("$TAG Intent has [Chat] extra")
-                    coreContext.postOnMainThread {
-                        try {
+                coreContext.postOnMainThread {
+                    try {
+                        if (intent.hasExtra(ARGUMENTS_CHAT)) {
+                            Log.i("$TAG Intent has [Chat] extra")
                             Log.i("$TAG Trying to go to Conversations fragment")
                             val args = intent.extras
                             val conversationId = args?.getString(ARGUMENTS_CONVERSATION_ID, "")
@@ -639,9 +649,49 @@ class MainActivity : GenericActivity() {
                                     navOptions
                                 )
                             }
-                        } catch (ise: IllegalStateException) {
-                            Log.e("$TAG Can't navigate to Conversations fragment: $ise")
+                        } else {
+                            when (pendingDefaultFragmentId) {
+                                CONTACTS_FRAGMENT_ID -> {
+                                    Log.i("$TAG Navigating to contacts fragment as default")
+                                    val navOptionsBuilder = NavOptions.Builder()
+                                    navOptionsBuilder.setPopUpTo(R.id.historyListFragment, true)
+                                    navOptionsBuilder.setLaunchSingleTop(true)
+                                    findNavController().navigate(
+                                        R.id.contactsListFragment,
+                                        bundleOf(),
+                                        navOptionsBuilder.build()
+                                    )
+                                }
+                                CHAT_FRAGMENT_ID -> {
+                                    Log.i("$TAG Navigating to conversations list fragment as default")
+                                    val navOptionsBuilder = NavOptions.Builder()
+                                    navOptionsBuilder.setPopUpTo(R.id.historyListFragment, true)
+                                    navOptionsBuilder.setLaunchSingleTop(true)
+                                    findNavController().navigate(
+                                        R.id.conversationsListFragment,
+                                        bundleOf(),
+                                        navOptionsBuilder.build()
+                                    )
+                                }
+                                MEETINGS_FRAGMENT_ID -> {
+                                    Log.i("$TAG Navigating to meetings fragment as default")
+                                    val navOptionsBuilder = NavOptions.Builder()
+                                    navOptionsBuilder.setPopUpTo(R.id.historyListFragment, true)
+                                    navOptionsBuilder.setLaunchSingleTop(true)
+                                    findNavController().navigate(
+                                        R.id.meetingsListFragment,
+                                        bundleOf(),
+                                        navOptionsBuilder.build()
+                                    )
+                                }
+                                else -> {
+                                    Log.i("$TAG History is the default fragment, no navigation needed")
+                                }
+                            }
                         }
+                        navigatedToDefaultFragment = true
+                    } catch (ise: IllegalStateException) {
+                        Log.e("$TAG Can't navigate: $ise")
                     }
                 }
             }
