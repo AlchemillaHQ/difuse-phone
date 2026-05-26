@@ -382,6 +382,15 @@ class AccountProfileViewModel
             account.params = copy
             registerEnabled.postValue(account.params.isRegisterEnabled)
 
+            val deviceId = corePreferences.difuseDeviceId
+            if (deviceId.isNotEmpty()) {
+                if (copy.isRegisterEnabled) {
+                    DifuseApi.enableDeviceAsync(deviceId)
+                } else {
+                    DifuseApi.disableDeviceAsync(deviceId)
+                }
+            }
+
             if (!core.isNetworkReachable) {
                 // To reflect the difference between Disabled & Disconnected
                 accountModel.value?.updateRegistrationState()

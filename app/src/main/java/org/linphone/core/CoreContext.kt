@@ -1346,6 +1346,12 @@ class CoreContext
                 return@getDeviceStatusAsync
             }
 
+            if (status.disabled) {
+                Log.i("$TAG Difuse device is disabled, skipping upstream registration check")
+                difuseStatusCheckInProgress.set(false)
+                return@getDeviceStatusAsync
+            }
+
             if (status.upstreamRegistered) {
                 difuseStatusCheckInProgress.set(false)
                 return@getDeviceStatusAsync

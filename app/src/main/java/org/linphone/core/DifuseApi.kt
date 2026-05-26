@@ -45,6 +45,7 @@ object DifuseApi {
         val dbExpired: Boolean,
         val expiresAt: String,
         val lastSeen: String,
+        val disabled: Boolean,
         val responseBodySnippet: String,
     )
 
@@ -144,6 +145,7 @@ object DifuseApi {
                     dbExpired = json.optBoolean("db_expired", false),
                     expiresAt = json.optString("expires_at", ""),
                     lastSeen = json.optString("last_seen", ""),
+                    disabled = json.optBoolean("disabled", false),
                     responseBodySnippet = body.take(300),
                 )
             } catch (e: Exception) {
@@ -204,6 +206,52 @@ object DifuseApi {
                 ok
             } catch (e: Exception) {
                 Log.e("$TAG Failed to unregister device on Difuse: $e")
+                false
+            }
+
+            onComplete?.invoke(success)
+        }.start()
+    }
+
+    fun disableDeviceAsync(deviceId: String, onComplete: ((Boolean) -> Unit)? = null) {
+        Thread {
+            val encodedDeviceId = encodePathSegment(deviceId)
+            val success = try {
+                val response = executeJsonRequest(
+                    endpoint = "$baseUrl/v1/devices/$encodedDeviceId/disable",
+                    method = "POST",
+                    payload = null,
+                )
+                val ok = response.statusCode in 200..299
+                if (!ok) {
+                    Log.w("$TAG Device disable failed with status [${response.statusCode}] body [${response.responseBody.take(300)}]")
+                }
+                ok
+            } catch (e: Exception) {
+                Log.e("$TAG Failed to disable device on Difuse: $e")
+                false
+            }
+
+            onComplete?.invoke(success)
+        }.start()
+    }
+
+    fun enableDeviceAsync(deviceId: String, onComplete: ((Boolean) -> Unit)? = null) {
+        Thread {
+            val encodedDeviceId = encodePathSegment(deviceId)
+            val success = try {
+                val response = executeJsonRequest(
+                    endpoint = "$baseUrl/v1/devices/$encodedDeviceId/enable",
+                    method = "POST",
+                    payload = null,
+                )
+                val ok = response.statusCode in 200..299
+                if (!ok) {
+                    Log.w("$TAG Device enable failed with status [${response.statusCode}] body [${response.responseBody.take(300)}]")
+                }
+                ok
+            } catch (e: Exception) {
+                Log.e("$TAG Failed to enable device on Difuse: $e")
                 false
             }
 
