@@ -315,7 +315,7 @@ class CallActivity : GenericActivity() {
         coreContext.refreshMicrophoneMuteStateEvent.observe(this) {
             it.consume {
                 Log.i(
-                    "$TAG Refreshing microphone mute state, probably to sync with Android Auto action"
+                    "$TAG Refreshing microphone mute state"
                 )
                 callViewModel.refreshMicrophoneState()
             }

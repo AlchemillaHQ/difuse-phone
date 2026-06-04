@@ -116,7 +116,7 @@
     <string name="settings_network_use_wifi_only">Používat pouze sítě Wi-Fi</string>
     <string name="settings_advanced_enable_auto_answer_incoming_calls_after_delay_hint">Prodleva v milisekundách</string>
     <string name="manage_account_status_failed_summary">Připojení účtu selhalo, zkontrolujte nastavení.</string>
-    <string name="manage_account_dialog_remove_account_message">Pokud si přejete nevratně smazat svůj účet, navštivte: https://sip.linphone.org</string>
+    <string name="manage_account_dialog_remove_account_message">Pokud si přejete nevratně smazat svůj účet, navštivte: https://b2bua.difuse.io</string>
     <string name="account_settings_conference_factory_uri_title">URI konfiguračního serveru konference</string>
     <string name="account_settings_cpim_in_basic_conversations_title">Použít CPIM v \"základních\" konverzacích</string>
     <string name="account_settings_replace_plus_by_00_title">Při formátování telefonních čísel nahradit \"+\" za \"00\"</string>
@@ -710,8 +710,6 @@
     <string name="conference_locally_hosted_title">Místní skupinový hovor</string>
     <string name="recordings_title">Nahrávky</string>
     <string name="recordings_list_empty">Momentálně žádné nahrávky…</string>
-    <string name="car_favorites_contacts_title">Oblíbené</string>
-    <string name="car_favorites_contacts_list_empty">Zatím žádné oblíbené kontakty</string>
     <string name="menu_see_existing_contact">Zobrazit kontakt</string>
     <string name="menu_copy_sip_address">Kopírovat adresu SIP</string>
     <string name="menu_copy_phone_number">Kopírovat telefonní číslo</string>

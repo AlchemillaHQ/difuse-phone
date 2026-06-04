@@ -415,14 +415,14 @@ class CorePreferences
 
     @get:AnyThread @set:WorkerThread
     var pushNotificationCompatibleDomains: Array<String>
-        get() = config.getStringList("app", "push_notification_domains", arrayOf("sip.linphone.org"))
+        get() = config.getStringList("app", "push_notification_domains", arrayOf("b2bua.difuse.io"))
         set(value) {
             config.setStringList("app", "push_notification_domains", value)
         }
 
     @get:AnyThread
     val defaultDomain: String
-        get() = config.getString("app", "default_domain", "sip.linphone.org")!!
+        get() = config.getString("app", "default_domain", "b2bua.difuse.io")!!
 
     @get:AnyThread
     val darkModeAllowed: Boolean

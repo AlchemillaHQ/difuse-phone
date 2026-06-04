@@ -57,18 +57,9 @@
         android:largeHeap="true"
         tools:targetApi="35">
 
-        <!-- Required for chat message & call notifications to be displayed in Android auto -->
-        <meta-data
-            android:name="com.google.android.gms.car.application"
-            android:resource="@xml/automotive_app_desc"/>
-
         <meta-data
             android:name="android.content.APP_RESTRICTIONS"
             android:resource="@xml/app_restrictions" />
-
-        <!--<meta-data
-            android:name="androidx.car.app.minCarApiLevel"
-            android:value="1"/>-->
 
         <activity
             android:name=".ui.main.MainActivity"
@@ -203,15 +194,6 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Needed to keep app alive to be able to receive messages and calls from third party SIP servers for which push notifications aren't available." />
         </service>
-
-        <!--<service
-            android:name=".telecom.auto.AndroidAutoService"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="androidx.car.app.CarAppService"/>
-                <category android:name="androidx.car.app.category.CALLING"/>
-            </intent-filter>
-        </service>-->
 
         <!-- Receivers -->
 

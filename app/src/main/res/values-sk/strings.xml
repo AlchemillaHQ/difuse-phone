@@ -279,7 +279,7 @@
     <string name="manage_account_device_remove">Odstrániť</string>
     <string name="manage_account_device_last_connection">Posledné pripojenie:</string>
     <string name="manage_account_dialog_remove_account_title">Odhlásiť sa z Vášho účtu?</string>
-    <string name="manage_account_dialog_remove_account_message">Pokiaľ si želáte nenávratne zmazať svoj účet, navštívte: https://sip.linphone.org</string>
+    <string name="manage_account_dialog_remove_account_message">Pokiaľ si želáte nenávratne zmazať svoj účet, navštívte: https://b2bua.difuse.io</string>
     <string name="account_settings_title">Nastavenia účtu</string>
     <string name="account_settings_push_notification_title">Povoliť push notifikácie</string>
     <string name="account_settings_im_encryption_mandatory_title">Šifrovanie správ je povinné</string>
@@ -694,7 +694,6 @@
     <string name="conference_locally_hosted_title">Miestny skupinový hovor</string>
     <string name="recordings_title">Nahrávky</string>
     <string name="recordings_list_empty">Momentálne žiadne nahrávky…</string>
-    <string name="car_favorites_contacts_list_empty">Zatiaľ žiadne obľúbené kontakty</string>
     <string name="menu_add_address_to_contacts">Pridať do kontaktov</string>
     <string name="menu_see_existing_contact">Zobraziť kontakt</string>
     <string name="menu_copy_sip_address">Kopírovať SIP adresu</string>
@@ -818,7 +817,6 @@
     </plurals>
     <string name="content_description_open_filter">Zobrazí filter</string>
     <string name="conference_layout_audio_only">Iba zvuk</string>
-    <string name="car_favorites_contacts_title">Obľúbené</string>
     <plurals name="pending_notification_for_other_accounts">
         <item quantity="one">%s oznámenie pre ďalší účet(ďalšie účty)</item>
         <item quantity="few">%s oznámenia pre ďalší účet(ďalšie účty)</item>

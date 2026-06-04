@@ -10,16 +10,16 @@
     <!-- Not translatable strings -->
     <string name="vertical_separator" translatable="false">|</string>
 
-    <string name="assistant_web_platform_link" translatable="false">subscribe.linphone.org</string>
-    <string name="assistant_linphone_contact_us_link" translatable="false">linphone.org/contact</string>
+    <string name="assistant_web_platform_link" translatable="false">subscribe.difuse.io</string>
+    <string name="assistant_linphone_contact_us_link" translatable="false">difuse.io/contact</string>
 
-    <string name="notification_channel_call_id" translatable="false">linphone_6.0_notification_call_id</string>
-    <string name="notification_channel_incoming_call_id" translatable="false">linphone_6.0_notification_incoming_call_id</string>
-    <string name="notification_channel_missed_call_id" translatable="false">linphone_6.0_notification_missed_call_id</string>
-    <string name="notification_channel_service_id" translatable="false">linphone_6.0_notification_service_id</string>
-    <string name="notification_channel_chat_id" translatable="false">linphone_6.0_notification_chat_id</string>
-    <string name="notification_channel_without_ringtone_incoming_call_id" translatable="false">linphone_6.0.1_notification_incoming_call_id</string>
-    <string name="notification_channel_account_error_id" translatable="false">linphone_6.1_account_error_id</string>
+    <string name="notification_channel_call_id" translatable="false">difuse_6.0_notification_call_id</string>
+    <string name="notification_channel_incoming_call_id" translatable="false">difuse_6.0_notification_incoming_call_id</string>
+    <string name="notification_channel_missed_call_id" translatable="false">difuse_6.0_notification_missed_call_id</string>
+    <string name="notification_channel_service_id" translatable="false">difuse_6.0_notification_service_id</string>
+    <string name="notification_channel_chat_id" translatable="false">difuse_6.0_notification_chat_id</string>
+    <string name="notification_channel_without_ringtone_incoming_call_id" translatable="false">difuse_6.0.1_notification_incoming_call_id</string>
+    <string name="notification_channel_account_error_id" translatable="false">difuse_6.1_account_error_id</string>
 
     <string name="emoji_love" translatable="false">❤️</string>
     <string name="emoji_thumbs_up" translatable="false">👍</string>
@@ -29,18 +29,18 @@
 
     <string name="help_about_open_source_licenses_title" translatable="false">GNU General Public License v3.0</string>
     <string name="help_about_open_source_licenses_subtitle" translatable="false">© Belledonne Communications 2010-2025 &amp; (c) Alchemilla Ventures Private Limited</string>
-    <string name="help_advanced_send_debug_logs_email_address" translatable="false">linphone-android@belledonne-communications.com</string>
+    <string name="help_advanced_send_debug_logs_email_address" translatable="false">support@difuse.io</string>
 
-    <string name="website_contact_url" translatable="false">https://linphone.org/contact</string>
-    <string name="website_download_url" translatable="false">https://linphone.org/linphone-softphone</string>
+    <string name="website_contact_url" translatable="false">https://difuse.io/contact</string>
+    <string name="website_download_url" translatable="false">https://difuse.io/linphone-softphone</string>
     <string name="website_user_guide_url" translatable="false">https://docs.difuse.io/dmsbg-100/guides/pbx/extensions-endpoints/softphones/difuse-phone.html</string>
     <string name="website_privacy_policy_url" translatable="false">https://difuse.io/privacy-policy</string>
-    <string name="website_terms_and_conditions_url" translatable="false">https://linphone.org/en/terms-of-use</string>
-    <string name="web_platform_register_email_url" translatable="false">https://subscribe.linphone.org/register/email</string>
-    <string name="web_platform_forgotten_password_url" translatable="false">https://subscribe.linphone.org</string>
-    <string name="website_translate_weblate_url" translatable="false">https://weblate.linphone.org/</string>
+    <string name="website_terms_and_conditions_url" translatable="false">https://difuse.io/en/terms-of-use</string>
+    <string name="web_platform_register_email_url" translatable="false">https://subscribe.difuse.io/register/email</string>
+    <string name="web_platform_forgotten_password_url" translatable="false">https://subscribe.difuse.io</string>
+    <string name="website_translate_weblate_url" translatable="false">https://weblate.difuse.io/</string>
     <string name="website_open_source_licences_usage_url" translatable="false">https://github.com/AlchemillaHQ/linphone-android/blob/master/LICENSE.txt</string>
-    <string name="conversation_end_to_end_encrypted_bottom_sheet_link" translatable="false"><u>https://linphone.org/en/features/#security</u></string>
+    <string name="conversation_end_to_end_encrypted_bottom_sheet_link" translatable="false"><u>https://difuse.io/en/features/#security</u></string>
 
     <string name="conversation_one_to_one_hidden_subject" translatable="false">Dummy subject</string>
 
@@ -124,7 +124,7 @@
     <!-- First screens user see when app is installed and started -->
     <string name="welcome_page_title">Welcome</string>
     <string name="welcome_page_subtitle"></string>
-    <string name="welcome_page_1_message">A <b>secured</b>, <b>open source</b> and <b>French</b> communication app.</string>
+    <string name="welcome_page_1_message">A <b>secured</b>, <b>open source</b> communication app.</string>
     <string name="welcome_page_2_title">Secured</string>
     <string name="welcome_page_2_message">Your communications are safe thanks to our <b>end-to-end encryption</b>.</string>
     <string name="welcome_page_3_title">Open source</string>
@@ -406,7 +406,7 @@
     <string name="manage_account_device_remove">Remove</string>
     <string name="manage_account_device_last_connection">Last connection:</string>
     <string name="manage_account_dialog_remove_account_title">Sign out of your account?</string>
-    <string name="manage_account_dialog_remove_account_message">If you wish to delete your account permanently, go to: https://sip.linphone.org</string>
+    <string name="manage_account_dialog_remove_account_message">If you wish to delete your account permanently, go to: https://b2bua.difuse.io</string>
     <string name="manage_account_outbound_proxy">Outbound SIP Proxy</string>
     <string name="manage_account_dialog_outbound_proxy_help_message">If this field is filled, the outbound proxy will be enabled automatically. Leave it empty to disable it.</string>
 
@@ -863,10 +863,6 @@
     <string name="recordings_title">Recordings</string>
     <string name="recordings_list_empty">No recording for the moment…</string>
 
-    <!-- Android Auto UI texts -->
-    <string name="car_favorites_contacts_title">Favorites</string>
-    <string name="car_favorites_contacts_list_empty">No favorite contact yet</string>
-
     <!-- Various menu entries -->
     <string name="menu_add_address_to_contacts">Add to contacts</string>
     <string name="menu_see_existing_contact">See contact</string>
@@ -1021,27 +1017,6 @@
     <string name="content_description_cancel_files_or_text_pending_sharing">Click to cancel files or text pending sharing</string>
     <string name="content_description_close_drawer_menu">Closes menu</string>
     <string name="content_description_scan_qr_code">Scan QR code to auto-fill account credentials</string>
-
-    <!-- Copy of private hosts_allowlist_sample in androidx.car.app:app:1.7.0-beta01, as they recommend it -->
-    <string-array name="hosts_allowlist_sample_copy" translatable="false">
-        <item>fdb00c43dbde8b51cb312aa81d3b5fa17713adb94b28f598d77f8eb89daceedf,
-            com.google.android.projection.gearhead</item>
-
-        <item>70811a3eacfd2e83e18da9bfede52df16ce91f2e69a44d21f18ab66991130771,
-            com.google.android.projection.gearhead</item>
-
-        <item>1975b2f17177bc89a5dff31f9e64a6cae281a53dc1d1d59b1d147fe1c82afa00,
-            com.google.android.projection.gearhead</item>
-
-        <item>c241ffbc8e287c4e9a4ad19632ba1b1351ad361d5177b7d7b29859bd2b7fc631,
-            com.google.android.apps.automotive.templates.host</item>
-
-        <item>dd66deaf312d8daec7adbe85a218ecc8c64f3b152f9b5998d5b29300c2623f61,
-            com.google.android.apps.automotive.templates.host</item>
-
-        <item>50e603d333c6049a37bd751375d08f3bd0abebd33facd30bd17b64b89658b421,
-            com.google.android.apps.automotive.templates.host</item>
-        </string-array>
 
     <string name="managed_config_uri_title" translatable="false">Remote provisioning URL</string>
     <string name="managed_config_uri_description" translatable="false">URL of the XML configuration file to fetch and apply on startup.</string>

@@ -12,10 +12,38 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Preserve line number information for Crashlytics stack trace deobfuscation
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep Kotlin metadata for reflection-based features
+-keepattributes *Annotation*, InnerClasses, EnclosingMethod, Signature
+-keep class kotlin.Metadata { *; }
+
+# Keep data binding classes
+-keep class android.databinding.** { *; }
+-keep class androidx.databinding.** { *; }
+-dontwarn android.databinding.**
+
+# Keep Parcelable implementations
+-keep class * implements android.os.Parcelable { *; }
+
+# Keep Serializable classes
+-keep class * implements java.io.Serializable { *; }
+
+# Keep custom views used from XML layouts
+-keep public class * extends android.view.View {
+    public <init>(android.content.Context);
+    public <init>(android.content.Context, android.util.AttributeSet);
+    public <init>(android.content.Context, android.util.AttributeSet, int);
+}
+
+# Keep Firebase/Crashlytics
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+
+# Keep Linphone SDK JNI methods
+-keep class org.linphone.core.** { *; }
+
+# Keep navigation safe-args classes
+-keep class * extends androidx.navigation.NavArgs { *; }

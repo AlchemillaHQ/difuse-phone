@@ -198,7 +198,7 @@
     <string name="manage_account_device_remove">Verwijderen</string>
     <string name="manage_account_device_last_connection">Laatste verbinding:</string>
     <string name="manage_account_dialog_remove_account_title">Uitloggen uit je account?</string>
-    <string name="manage_account_dialog_remove_account_message">Als je je account permanent wilt verwijderen, ga naar: https://sip.linphone.org</string>
+    <string name="manage_account_dialog_remove_account_message">Als je je account permanent wilt verwijderen, ga naar: https://b2bua.difuse.io</string>
     <string name="account_settings_title">Accountinstellingen</string>
     <string name="content_description_chat_open_attach_file">Open bestandskiezer</string>
     <string name="content_description_ldap_save">Sla LDAP-configuratie op</string>
@@ -566,8 +566,6 @@
     <string name="conference_locally_hosted_title">Lokale groepsoproep</string>
     <string name="recordings_title">Opnames</string>
     <string name="recordings_list_empty">Momenteel geen opnames…</string>
-    <string name="car_favorites_contacts_title">Favorieten</string>
-    <string name="car_favorites_contacts_list_empty">Nog geen favoriete contact</string>
     <string name="menu_add_address_to_contacts">Toevoegen aan contacten</string>
     <string name="menu_see_existing_contact">Bekijk contact</string>
     <string name="menu_copy_phone_number">Telefoonnummer kopiëren</string>

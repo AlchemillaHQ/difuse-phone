@@ -195,17 +195,7 @@ class AudioUtils {
             Log.i(
                 "$TAG Found headset/headphones/hearingAid sound card [$headphonesCard], bluetooth sound card [$bluetoothCard], speaker sound card [$speakerCard] and earpiece sound card [$earpieceCard]"
             )
-            return if (coreContext.isConnectedToAndroidAuto) {
-                Log.w(
-                    "$TAG Device seems to be connected to Android Auto, do not use bluetooth sound card, priority order is headphone > speaker > earpiece"
-                )
-                headphonesCard ?: speakerCard ?: earpieceCard
-            } else {
-                Log.i(
-                    "$TAG Device doesn't seem to be connected to Android Auto, use headphone > bluetooth > speaker > earpiece sound card in priority order"
-                )
-                headphonesCard ?: bluetoothCard ?: speakerCard ?: earpieceCard
-            }
+            return headphonesCard ?: bluetoothCard ?: speakerCard ?: earpieceCard
         }
 
         @WorkerThread

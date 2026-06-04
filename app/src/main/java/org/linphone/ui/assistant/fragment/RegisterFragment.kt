@@ -20,10 +20,8 @@
 package org.linphone.ui.assistant.fragment
 
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.telephony.TelephonyManager
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
@@ -44,10 +42,9 @@ import org.linphone.core.tools.Log
 import org.linphone.databinding.AssistantRegisterFragmentBinding
 import org.linphone.ui.GenericFragment
 import org.linphone.ui.assistant.viewmodel.AccountCreationViewModel
-import org.linphone.utils.ConfirmationDialogModel
 import org.linphone.utils.AppUtils
+import org.linphone.utils.ConfirmationDialogModel
 import org.linphone.utils.DialogUtils
-import org.linphone.utils.PhoneNumberUtils
 import androidx.core.net.toUri
 
 @UiThread
@@ -64,11 +61,15 @@ class RegisterFragment : GenericFragment() {
 
     private val dropdownListener = object : AdapterView.OnItemSelectedListener {
         override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-            val dialPlan = viewModel.dialPlansList[position]
-            Log.i(
-                "$TAG Selected dialplan updated [+${dialPlan.countryCallingCode}] / [${dialPlan.country}]"
-            )
-            viewModel.selectedDialPlan.value = dialPlan
+            if (position > 0) {
+                val dialPlan = viewModel.dialPlansList[position - 1]
+                Log.i(
+                    "$TAG Selected dialplan updated [+${dialPlan.countryCallingCode}] / [${dialPlan.country}]"
+                )
+                viewModel.selectedDialPlan.value = dialPlan
+            } else {
+                viewModel.selectedDialPlan.value = null
+            }
         }
 
         override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -163,8 +164,6 @@ class RegisterFragment : GenericFragment() {
             }
         }
 
-        val telephonyManager = requireContext().getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        val countryIso = telephonyManager.networkCountryIso
         coreContext.postOnCoreThread {
             val fragmentContext = context ?: return@postOnCoreThread
 
@@ -182,16 +181,9 @@ class RegisterFragment : GenericFragment() {
             }
             adapter.setDropDownViewResource(R.layout.assistant_country_picker_dropdown_cell)
 
-            val dialPlan = PhoneNumberUtils.getDeviceDialPlan(countryIso)
-            var default = 0
-            if (dialPlan != null) {
-                viewModel.selectedDialPlan.postValue(dialPlan)
-                default = viewModel.dialPlansList.indexOf(dialPlan)
-            }
-
             coreContext.postOnMainThread {
                 binding.prefix.adapter = adapter
-                binding.prefix.setSelection(default)
+                binding.prefix.setSelection(0)
                 binding.prefix.onItemSelectedListener = dropdownListener
             }
         }

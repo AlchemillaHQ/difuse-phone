@@ -130,22 +130,15 @@ class TelecomCallControlCallback(
                     "$TAG We're asked to [${if (muted) "mute" else "unmute"}] the call in state [$callState]"
                 )
                 // Only follow un-mute requests for not outgoing calls (such as joining a conference muted)
-                // and if connected to Android Auto that has a way to let user mute/unmute from the car directly
-                // or if we muted the call previously following Telecom Manager request.
-                if (muted || mutedByTelecomManager || (!LinphoneUtils.isCallOutgoing(callState, false) && coreContext.isConnectedToAndroidAuto)) {
+                // and if we muted the call previously following Telecom Manager request.
+                if (muted || mutedByTelecomManager) {
                     mutedByTelecomManager = muted
                     call.microphoneMuted = muted
                     coreContext.refreshMicrophoneMuteStateEvent.postValue(Event(true))
                 } else {
-                    if (coreContext.isConnectedToAndroidAuto) {
-                        Log.w(
-                            "$TAG Not following unmute request because call is in state [$callState]"
-                        )
-                    } else {
-                        Log.w(
-                            "$TAG Not following unmute request because user isn't connected to Android Auto and call is in state [$callState]"
-                        )
-                    }
+                    Log.w(
+                        "$TAG Not following unmute request because call is in state [$callState]"
+                    )
                 }
             }
         }.launchIn(scope)

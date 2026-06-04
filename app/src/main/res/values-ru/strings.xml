@@ -239,7 +239,7 @@
     <string name="settings_advanced_video_codecs_title">Видеокодеки</string>
     <string name="manage_account_edit_picture">Редактировать изображение</string>
     <string name="manage_account_add_picture">Добавить изображение</string>
-    <string name="manage_account_dialog_remove_account_message">Если вы хотите удалить свою учетную запись навсегда, перейдите по ссылке: https://sip.linphone.org</string>
+    <string name="manage_account_dialog_remove_account_message">Если вы хотите удалить свою учетную запись навсегда, перейдите по ссылке: https://b2bua.difuse.io</string>
     <string name="account_settings_turn_username_title">Имя пользователя TURN</string>
     <string name="account_settings_audio_video_conference_factory_uri_title">URI фабрики аудио/видео конференции</string>
     <string name="assistant_third_party_sip_account_warning_ok">Я понял</string>
@@ -593,7 +593,6 @@
     <string name="conference_locally_hosted_title">Местный групповой звонок</string>
     <string name="recordings_title">Записи звонков</string>
     <string name="recordings_list_empty">На данный момент записи нет…</string>
-    <string name="car_favorites_contacts_title">Избранное</string>
     <string name="menu_add_address_to_contacts">Добавить в контакты</string>
     <string name="menu_see_existing_contact">Смотреть контакт</string>
     <string name="menu_copy_sip_address">Копировать SIP-адрес</string>
@@ -768,7 +767,6 @@
     <string name="conversation_info_participant_has_been_granted_admin_rights_toast">%s теперь администратор</string>
     <string name="conversation_info_participant_no_longer_has_admin_rights_toast">%s больше не администратор</string>
     <string name="call_stats_zrtp_auth_tag_algo">Алгоритм аутентификации: %s</string>
-    <string name="car_favorites_contacts_list_empty">Пока нет избранного контакта</string>
     <string name="menu_export_selected_item">Скачать</string>
     <string name="green">Зелёный</string>
     <string name="conversation_event_security_event_man_in_the_middle_detected">Обнаружена атака типа «человек посередине» для %s</string>

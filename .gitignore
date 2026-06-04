@@ -11,6 +11,7 @@ app/debug/
 app/release/
 .idea/
 app/bc-android.keystore
+keystore.properties
 .kotlin/
 /flexisip/
 /difuse-b2bua/

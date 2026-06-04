@@ -20,10 +20,8 @@
 package org.linphone.ui.assistant.fragment
 
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.telephony.TelephonyManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -43,7 +41,6 @@ import org.linphone.ui.GenericFragment
 import org.linphone.ui.assistant.model.AcceptConditionsAndPolicyDialogModel
 import org.linphone.ui.assistant.viewmodel.AccountLoginViewModel
 import org.linphone.utils.DialogUtils
-import org.linphone.utils.PhoneNumberUtils
 import androidx.core.net.toUri
 
 @UiThread
@@ -147,15 +144,6 @@ class LandingFragment : GenericFragment() {
             }
         }
 
-        val telephonyManager = requireContext().getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        val countryIso = telephonyManager.networkCountryIso
-        coreContext.postOnCoreThread {
-            val dialPlan = PhoneNumberUtils.getDeviceDialPlan(countryIso)
-            if (dialPlan != null) {
-                viewModel.internationalPrefix.postValue(dialPlan.countryCallingCode)
-                viewModel.internationalPrefixIsoCountryCode.postValue(dialPlan.isoCountryCode)
-            }
-        }
     }
 
     private fun goToRegisterFragment() {

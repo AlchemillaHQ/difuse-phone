@@ -36,7 +36,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.UiThread
-import androidx.car.app.connection.CarConnection
 import androidx.core.app.ActivityCompat
 import androidx.core.os.bundleOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -377,18 +376,6 @@ class MainActivity : GenericActivity() {
                     coreContext.clearFilesToExportToNativeGallery()
                 }
             }
-        }
-
-        CarConnection(this).type.observe(this) {
-            val asString = when (it) {
-                CarConnection.CONNECTION_TYPE_NOT_CONNECTED -> "NOT CONNECTED"
-                CarConnection.CONNECTION_TYPE_PROJECTION -> "PROJECTION"
-                CarConnection.CONNECTION_TYPE_NATIVE -> "NATIVE"
-                else -> "UNEXPECTED ($it)"
-            }
-            Log.i("$TAG Car connection is [$asString]")
-            val projection = it == CarConnection.CONNECTION_TYPE_PROJECTION
-            coreContext.isConnectedToAndroidAuto = projection
         }
     }
 

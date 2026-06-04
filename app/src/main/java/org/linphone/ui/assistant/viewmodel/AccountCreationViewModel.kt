@@ -265,6 +265,8 @@ class AccountCreationViewModel
         coreContext.postOnCoreThread { core ->
             pushNotificationsAvailable.postValue(LinphoneUtils.arePushNotificationsAvailable(core))
 
+            dialPlansLabelList.add("")
+            dialPlansShortLabelList.add("")
             val dialPlans = Factory.instance().dialPlans.toList()
             for (dialPlan in dialPlans) {
                 dialPlansList.add(dialPlan)

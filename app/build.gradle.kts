@@ -37,7 +37,7 @@ if (crashlyticsAvailable) {
     println("Crashlytics has been disabled because either google-services.json file wasn't found or local Linphone SDK build folder isn't configured")
 }
 
-var gitVersion = "6.1.0-alpha"
+var gitVersion = "6.1.0"
 var gitBranch = ""
 try {
     val gitDescribe = ProcessBuilder()
@@ -107,7 +107,7 @@ android {
         minSdk = 28
         targetSdk = 36
         versionCode = 601002 // 6.01.002
-        versionName = "6.1.0-alpha"
+        versionName = "6.1.0"
 
         manifestPlaceholders["appAuthRedirectScheme"] = packageName
 
@@ -241,7 +241,6 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.emoji2)
-    implementation(libs.androidx.car)
 
     // https://github.com/google/flexbox-layout/blob/main/LICENSE Apache v2.0
     implementation(libs.google.flexbox)

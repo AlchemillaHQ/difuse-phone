@@ -352,7 +352,7 @@
     <string name="manage_account_device_remove">Remover</string>
     <string name="manage_account_device_last_connection">Última conexão:</string>
     <string name="manage_account_dialog_remove_account_title">Sair da sua conta?</string>
-    <string name="manage_account_dialog_remove_account_message">Se você deseja excluir sua conta permanentemente, acesse: https://sip.linphone.org</string>
+    <string name="manage_account_dialog_remove_account_message">Se você deseja excluir sua conta permanentemente, acesse: https://b2bua.difuse.io</string>
     <string name="account_settings_stun_server_url_title">URL do servidor STUN/TURN</string>
     <string name="account_settings_enable_ice_title">Ativar ICE</string>
     <string name="account_settings_enable_turn_title">Ativar TURN</string>
@@ -808,8 +808,6 @@
     <string name="conference_participant_joining_text">Entrando…</string>
     <string name="conference_participant_paused_text">Pausado</string>
     <string name="recordings_list_empty">Nenhuma gravação no momento…</string>
-    <string name="car_favorites_contacts_title">Favoritos</string>
-    <string name="car_favorites_contacts_list_empty">Nenhum contato favorito ainda</string>
     <string name="menu_add_address_to_contacts">Adicionar aos contatos</string>
     <string name="menu_see_existing_contact">Ver contato</string>
     <string name="menu_copy_sip_address">Copiar endereço SIP</string>

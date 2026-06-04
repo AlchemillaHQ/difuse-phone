@@ -37,7 +37,6 @@
     <string name="content_description_cancel_voice_message_recording">取消语音信息录制</string>
     <string name="call_stats_codec_label">编解码器：%s</string>
     <string name="call_stats_fec_lost_bandwidth_label">带宽：%s</string>
-    <string name="car_favorites_contacts_title">收藏夹</string>
     <string name="content_description_show_call_statistics">显示通话统计信息</string>
     <string name="content_description_chat_bubble_delivery_status">点击查看送达状态</string>
     <string name="help_troubleshooting_firebase_project_title">Firebase 项目ID</string>
@@ -303,7 +302,7 @@
     <string name="manage_account_device_remove">删除</string>
     <string name="manage_account_device_last_connection">上次连接：</string>
     <string name="manage_account_dialog_remove_account_title">退出登录并注销您的账户（该账户信息会被清除）？</string>
-    <string name="manage_account_dialog_remove_account_message">如果您想永久删除您的账户，请转到：https://sip.linphone.org</string>
+    <string name="manage_account_dialog_remove_account_message">如果您想永久删除您的账户，请转到：https://b2bua.difuse.io</string>
     <string name="account_settings_title">账户设置</string>
     <string name="account_settings_push_notification_title">允许推送通知</string>
     <string name="account_settings_push_notification_not_available_title">推送通知不可用！</string>
@@ -646,7 +645,6 @@
     <string name="conference_locally_hosted_title">本地组呼叫</string>
     <string name="recordings_title">录音</string>
     <string name="recordings_list_empty">暂时没有录音…</string>
-    <string name="car_favorites_contacts_list_empty">还没有收藏夹联系人</string>
     <string name="menu_add_address_to_contacts">添加到联系人</string>
     <string name="menu_copy_sip_address">复制SIP地址</string>
     <string name="menu_copy_phone_number">复制电话号码</string>

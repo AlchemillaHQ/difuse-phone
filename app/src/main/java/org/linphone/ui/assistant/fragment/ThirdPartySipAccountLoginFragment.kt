@@ -19,9 +19,7 @@
  */
 package org.linphone.ui.assistant.fragment
 
-import android.content.Context
 import android.os.Bundle
-import android.telephony.TelephonyManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -41,7 +39,6 @@ import org.linphone.ui.GenericFragment
 import org.linphone.ui.assistant.viewmodel.ThirdPartySipAccountLoginViewModel
 import org.linphone.ui.main.sso.fragment.SingleSignOnFragmentDirections
 import org.linphone.utils.DialogUtils
-import org.linphone.utils.PhoneNumberUtils
 
 @UiThread
 class ThirdPartySipAccountLoginFragment : GenericFragment() {
@@ -133,15 +130,6 @@ class ThirdPartySipAccountLoginFragment : GenericFragment() {
             }
         }
 
-        val telephonyManager = requireContext().getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        val countryIso = telephonyManager.networkCountryIso
-        coreContext.postOnCoreThread {
-            val dialPlan = PhoneNumberUtils.getDeviceDialPlan(countryIso)
-            if (dialPlan != null) {
-                viewModel.internationalPrefix.postValue(dialPlan.countryCallingCode)
-                viewModel.internationalPrefixIsoCountryCode.postValue(dialPlan.isoCountryCode)
-            }
-        }
     }
 
     private fun goBack() {

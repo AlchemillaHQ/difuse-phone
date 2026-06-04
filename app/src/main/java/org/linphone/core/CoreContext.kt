@@ -105,8 +105,6 @@ class CoreContext
     var bearerAuthInfoPendingPasswordUpdate: AuthInfo? = null
     var digestAuthInfoPendingPasswordUpdate: AuthInfo? = null
 
-    var isConnectedToAndroidAuto: Boolean = false
-
     val bearerAuthenticationRequestedEvent: MutableLiveData<Event<Pair<String, String?>>> by lazy {
         MutableLiveData<Event<Pair<String, String?>>>()
     }
@@ -736,8 +734,7 @@ class CoreContext
             }
 
             if (core.logCollectionUploadServerUrl.isNullOrEmpty()) {
-                Log.w("$TAG Logs sharing server URL not set, fixing that")
-                core.logCollectionUploadServerUrl = "https://files.linphone.org/http-file-transfer-server/hft.php"
+                Log.w("$TAG Logs sharing server URL not set, leaving empty")
             }
 
             corePreferences.linphoneConfigurationVersion = currentVersion
@@ -1713,17 +1710,6 @@ class CoreContext
         // Add that flag back, was disabled for a time during dev process
         Log.i("$TAG Enabling hiding empty chat rooms")
         core.config.setBool("misc", "hide_empty_chat_rooms", true)
-
-        // Replace old URLs by new ones
-        if (corePreferences.checkForUpdateServerUrl == "https://www.linphone.org/releases") {
-            corePreferences.checkForUpdateServerUrl = "https://download.linphone.org/releases"
-        }
-        if (core.fileTransferServer == "https://www.linphone.org:444/lft.php") {
-            core.fileTransferServer = "https://files.linphone.org/http-file-transfer-server/hft.php"
-        }
-        if (core.logCollectionUploadServerUrl == "https://www.linphone.org:444/lft.php") {
-            core.logCollectionUploadServerUrl = "https://files.linphone.org/http-file-transfer-server/hft.php"
-        }
 
         Log.i("$TAG IMDN threshold set to 1 (meaning only sender will receive delivery & read notifications)")
         core.imdnToEverybodyThreshold = 1

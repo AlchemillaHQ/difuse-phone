@@ -1,1 +1,1 @@
-Linphone - open source SIP client
+Difuse Phone - Secure SIP Client
