@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.DisplayMetrics
+import androidx.activity.enableEdgeToEdge
 import androidx.annotation.UiThread
 import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
@@ -47,15 +48,17 @@ class FileViewerActivity : GenericActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge(
+            statusBarStyle = androidx.activity.SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT) {
+                true
+            },
+            navigationBarStyle = androidx.activity.SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+        )
+
         super.onCreate(savedInstanceState)
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = android.graphics.Color.TRANSPARENT
-        window.navigationBarColor = android.graphics.Color.TRANSPARENT
         val nightMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
-        val controller = WindowCompat.getInsetsController(window, window.decorView)
-        controller.isAppearanceLightStatusBars = nightMode != android.content.res.Configuration.UI_MODE_NIGHT_YES
-        controller.isAppearanceLightNavigationBars = nightMode != android.content.res.Configuration.UI_MODE_NIGHT_YES
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = nightMode != android.content.res.Configuration.UI_MODE_NIGHT_YES
 
         binding = DataBindingUtil.setContentView(this, R.layout.file_viewer_activity)
         binding.lifecycleOwner = this

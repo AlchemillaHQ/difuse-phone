@@ -33,6 +33,8 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.WindowManager
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.SystemBarStyle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.UiThread
 import androidx.core.app.ActivityCompat
@@ -145,16 +147,15 @@ class MainActivity : GenericActivity() {
         // Must be done before the setContentView
         installSplashScreen()
 
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { true },
+            navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
+        )
+
         super.onCreate(savedInstanceState)
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = Color.TRANSPARENT
-        window.navigationBarColor = Color.TRANSPARENT
-
-        val controller = WindowCompat.getInsetsController(window, window.decorView)
-        controller.isAppearanceLightStatusBars = false
         val nightModeFlags = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-        controller.isAppearanceLightNavigationBars = nightModeFlags != Configuration.UI_MODE_NIGHT_YES
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = nightModeFlags != Configuration.UI_MODE_NIGHT_YES
 
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity)
         binding.lifecycleOwner = this
@@ -276,6 +277,12 @@ class MainActivity : GenericActivity() {
             } else {
                 viewModel.filesOrTextPendingSharingListCleared()
             }
+        }
+
+        // Check full screen intent permission on startup
+        if (!Compatibility.hasFullScreenIntentPermission(this)) {
+            Log.w("$TAG Full screen intent permission not granted, showing dialog on startup")
+            viewModel.askFullScreenIntentPermissionEvent.value = Event(true)
         }
 
         // Wait for latest visited fragment to be displayed before hiding the splashscreen

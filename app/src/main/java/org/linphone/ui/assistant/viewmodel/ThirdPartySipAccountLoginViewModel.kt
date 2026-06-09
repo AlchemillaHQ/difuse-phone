@@ -24,6 +24,7 @@ import androidx.annotation.WorkerThread
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import java.util.UUID
+import org.json.JSONObject
 import org.linphone.LinphoneApplication.Companion.coreContext
 import org.linphone.LinphoneApplication.Companion.corePreferences
 import org.linphone.R
@@ -207,7 +208,7 @@ class ThirdPartySipAccountLoginViewModel
                 return@postOnCoreThread
             }
 
-            val deviceId = getOrCreateDifuseDeviceId()
+            val deviceId = getOrCreateDifuseDeviceId(directIdentity.asStringUriOnly())
             val pushToken = core.pushNotificationConfig?.prid.orEmpty().trim().ifEmpty {
                 corePreferences.difusePushToken
             }
@@ -283,6 +284,16 @@ class ThirdPartySipAccountLoginViewModel
 
                     corePreferences.difuseB2buaSipUri = registerResult.b2buaSipUri
                     corePreferences.difusePushToken = pushToken
+
+                    // Store per-account B2BUA SIP URI
+                    val accountB2buaMapping = try {
+                        JSONObject(corePreferences.difuseAccountB2buaSipUris)
+                    } catch (e: Exception) {
+                        JSONObject()
+                    }
+                    accountB2buaMapping.put(directIdentity.asStringUriOnly(), registerResult.b2buaSipUri)
+                    corePreferences.difuseAccountB2buaSipUris = accountB2buaMapping.toString()
+
                     Log.i("$TAG Difuse registration succeeded, using B2BUA URI [${b2buaIdentity.asStringUriOnly()}]")
 
                     val created = createAccountsAndStartRegistration(
@@ -406,7 +417,28 @@ class ThirdPartySipAccountLoginViewModel
     }
 
     @WorkerThread
-    private fun getOrCreateDifuseDeviceId(): String {
+    private fun getOrCreateDifuseDeviceId(accountIdentity: String? = null): String {
+        // If accountIdentity is provided, use per-account device ID
+        if (accountIdentity != null) {
+            val mapping = try {
+                JSONObject(corePreferences.difuseAccountDeviceIds)
+            } catch (e: Exception) {
+                JSONObject()
+            }
+
+            // Check if we already have a device ID for this account
+            val existing = mapping.optString(accountIdentity, "")
+            if (existing.isNotEmpty()) return existing
+
+            // Generate a new unique device ID for this account
+            val generated = UUID.randomUUID().toString()
+            mapping.put(accountIdentity, generated)
+            corePreferences.difuseAccountDeviceIds = mapping.toString()
+            Log.i("$TAG Generated new device ID for account [$accountIdentity]: $generated")
+            return generated
+        }
+
+        // Fallback to shared device ID (for backward compatibility)
         val stored = corePreferences.difuseDeviceId
         if (stored.isNotEmpty()) return stored
 

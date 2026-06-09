@@ -1383,10 +1383,6 @@ class CoreContext
 
     @WorkerThread
     private fun registerDifuseDeviceIfNeeded() {
-        val deviceId = corePreferences.difuseDeviceId
-        if (deviceId.isEmpty()) return
-        if (corePreferences.difuseB2buaSipUri.isNotEmpty()) return
-
         val token = core.pushNotificationConfig?.prid.orEmpty().trim().ifEmpty {
             corePreferences.difusePushToken
         }
@@ -1395,12 +1391,33 @@ class CoreContext
             return
         }
 
+        // Check if any visible account is missing a B2BUA URI
+        val visibleAccounts = core.accountList.filter { !it.isPushOnly() }
+        val b2buaMapping = try {
+            JSONObject(corePreferences.difuseAccountB2buaSipUris)
+        } catch (e: Exception) {
+            JSONObject()
+        }
+
+        val missingRegistration = visibleAccounts.any { account ->
+            val identity = account.params.identityAddress
+            if (identity == null) {
+                true
+            } else {
+                b2buaMapping.optString(identity.asStringUriOnly(), "").isEmpty()
+            }
+        }
+
+        if (!missingRegistration) {
+            Log.i("$TAG All visible accounts have B2BUA URIs, skipping registration")
+            return
+        }
+
         if (!difuseInitialRegisterInProgress.compareAndSet(false, true)) return
 
-        Log.i("$TAG Difuse B2BUA URI is missing, attempting register fallback now that push token is available")
-        registerDeviceOnDifuseFromCurrentAccount(deviceId, "missing_b2bua") {
-            difuseInitialRegisterInProgress.set(false)
-        }
+        Log.i("$TAG Some accounts missing B2BUA URIs, registering all accounts on Difuse")
+        registerAllAccountsOnDifuse()
+        difuseInitialRegisterInProgress.set(false)
     }
 
     @AnyThread
@@ -1500,6 +1517,125 @@ class CoreContext
                 onComplete.invoke()
             }.start()
         }
+    }
+
+    @AnyThread
+    fun forceReregisterAllAccounts() {
+        postOnCoreThread {
+            Log.i("$TAG Force re-registering all accounts on Difuse")
+            registerAllAccountsOnDifuse()
+        }
+    }
+
+    @WorkerThread
+    private fun registerAllAccountsOnDifuse() {
+        val pushToken = core.pushNotificationConfig?.prid.orEmpty().trim().ifEmpty {
+            corePreferences.difusePushToken
+        }
+        if (pushToken.isEmpty()) {
+            Log.w("$TAG Can't register all accounts, push token is empty")
+            return
+        }
+
+        val visibleAccounts = core.accountList.filter { !it.isPushOnly() }
+        if (visibleAccounts.isEmpty()) {
+            Log.w("$TAG No visible accounts to register on Difuse")
+            return
+        }
+
+        Log.i("$TAG Registering [${visibleAccounts.size}] accounts on Difuse")
+
+        // Load existing device ID mapping
+        val deviceIdMapping = try {
+            JSONObject(corePreferences.difuseAccountDeviceIds)
+        } catch (e: Exception) {
+            JSONObject()
+        }
+
+        // Load existing B2BUA URI mapping
+        val b2buaMapping = try {
+            JSONObject(corePreferences.difuseAccountB2buaSipUris)
+        } catch (e: Exception) {
+            JSONObject()
+        }
+
+        for (account in visibleAccounts) {
+            val identity = account.params.identityAddress
+            if (identity == null) {
+                Log.w("$TAG Skipping account with null identity")
+                continue
+            }
+
+            val accountKey = identity.asStringUriOnly()
+
+            // Get or generate device ID for this account
+            var deviceId = deviceIdMapping.optString(accountKey, "")
+            if (deviceId.isEmpty()) {
+                deviceId = UUID.randomUUID().toString()
+                deviceIdMapping.put(accountKey, deviceId)
+                Log.i("$TAG Generated new device ID for account [$accountKey]: $deviceId")
+            }
+
+            // Get account credentials
+            val authInfo = account.findAuthInfo()
+            val server = account.params.serverAddress
+
+            val upstreamHost = authInfo?.domain.orEmpty().ifEmpty {
+                server?.domain.orEmpty().ifEmpty { identity.domain.orEmpty() }
+            }
+            val upstreamUser = authInfo?.username.orEmpty().ifEmpty { identity.username.orEmpty() }
+            val upstreamPassword = authInfo?.password.orEmpty()
+            val upstreamRealm = authInfo?.realm.orEmpty().ifEmpty { upstreamHost }
+            val upstreamTransport = when (server?.transport) {
+                TransportType.Udp -> "udp"
+                TransportType.Tcp -> "tcp"
+                else -> "tls"
+            }
+            val upstreamPort = server?.port?.takeIf { it > 0 } ?: if (upstreamTransport == "tls") 5061 else 5060
+            val displayName = identity.displayName.orEmpty()
+
+            if (upstreamHost.isEmpty() || upstreamUser.isEmpty() || upstreamPassword.isEmpty()) {
+                Log.w("$TAG Skipping account [$accountKey], incomplete credentials")
+                continue
+            }
+
+            // Register this account on Difuse
+            Thread {
+                val result = DifuseApi.registerDevice(
+                    deviceId = deviceId,
+                    pushToken = pushToken,
+                    upstreamHost = upstreamHost,
+                    upstreamPort = upstreamPort,
+                    upstreamTransport = upstreamTransport,
+                    upstreamUser = upstreamUser,
+                    upstreamPassword = upstreamPassword,
+                    upstreamRealm = upstreamRealm,
+                    displayName = displayName,
+                )
+
+                postOnCoreThread {
+                    if (result != null && result.statusCode in 200..299 && result.b2buaSipUri.isNotEmpty()) {
+                        Log.i("$TAG Difuse registration succeeded for account [$accountKey], B2BUA URI: ${result.b2buaSipUri}")
+
+                        // Store B2BUA URI mapping
+                        b2buaMapping.put(accountKey, result.b2buaSipUri)
+                        corePreferences.difuseAccountB2buaSipUris = b2buaMapping.toString()
+
+                        // Update legacy single-URI preference for backward compatibility
+                        corePreferences.difuseB2buaSipUri = result.b2buaSipUri
+                        corePreferences.difuseDeviceId = deviceId
+
+                        // Ensure push-only account exists
+                        ensurePushOnlyDifuseAccountExists(account, result.b2buaSipUri)
+                    } else {
+                        Log.e("$TAG Difuse registration failed for account [$accountKey]")
+                    }
+                }
+            }.start()
+        }
+
+        // Save the updated device ID mapping
+        corePreferences.difuseAccountDeviceIds = deviceIdMapping.toString()
     }
 
     @WorkerThread

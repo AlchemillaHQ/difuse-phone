@@ -132,10 +132,24 @@ class CorePreferences
         }
 
     @get:AnyThread @set:WorkerThread
+    var difuseAccountDeviceIds: String
+        get() = config.getString("app", "difuse_account_device_ids", "{}").orEmpty()
+        set(value) {
+            config.setString("app", "difuse_account_device_ids", value)
+        }
+
+    @get:AnyThread @set:WorkerThread
     var difuseB2buaSipUri: String
         get() = config.getString("app", "difuse_b2bua_sip_uri", "").orEmpty().trim()
         set(value) {
             config.setString("app", "difuse_b2bua_sip_uri", value.trim())
+        }
+
+    @get:AnyThread @set:WorkerThread
+    var difuseAccountB2buaSipUris: String
+        get() = config.getString("app", "difuse_account_b2bua_sip_uris", "{}").orEmpty()
+        set(value) {
+            config.setString("app", "difuse_account_b2bua_sip_uris", value)
         }
 
     @get:AnyThread @set:WorkerThread
