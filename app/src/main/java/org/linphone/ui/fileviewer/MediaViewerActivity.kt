@@ -2,11 +2,12 @@ package org.linphone.ui.fileviewer
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
 import androidx.annotation.UiThread
 import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.databinding.DataBindingUtil
@@ -65,8 +66,15 @@ class MediaViewerActivity : GenericActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        val nightMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        controller.isAppearanceLightStatusBars = nightMode != android.content.res.Configuration.UI_MODE_NIGHT_YES
+        controller.isAppearanceLightNavigationBars = nightMode != android.content.res.Configuration.UI_MODE_NIGHT_YES
 
         binding = DataBindingUtil.setContentView(this, R.layout.file_media_viewer_activity)
         binding.lifecycleOwner = this

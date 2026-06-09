@@ -155,8 +155,8 @@ class ContactsListViewModel
         disableAddContact.value = corePreferences.disableAddContact
 
         coreContext.postOnCoreThread { core ->
-            domainFilter = corePreferences.contactsFilter
-            areAllContactsDisplayed.postValue(domainFilter.isEmpty())
+            domainFilter = ""
+            areAllContactsDisplayed.postValue(true)
             checkIfDefaultAccountOnDefaultDomain()
 
             coreContext.contactsManager.addListener(contactsListener)
@@ -199,8 +199,8 @@ class ContactsListViewModel
     @UiThread
     fun applyCurrentDefaultAccountFilter() {
         coreContext.postOnCoreThread {
-            domainFilter = corePreferences.contactsFilter
-            areAllContactsDisplayed.postValue(domainFilter.isEmpty())
+            domainFilter = ""
+            areAllContactsDisplayed.postValue(true)
             checkIfDefaultAccountOnDefaultDomain()
 
             coreContext.postOnMainThread {
@@ -220,7 +220,7 @@ class ContactsListViewModel
                 ""
             }
             areAllContactsDisplayed.postValue(domainFilter.isEmpty())
-            corePreferences.contactsFilter = domainFilter
+            corePreferences.contactsFilter = ""
             Log.i("$TAG Newly set filter is [${corePreferences.contactsFilter}]")
 
             coreContext.postOnCoreThread {

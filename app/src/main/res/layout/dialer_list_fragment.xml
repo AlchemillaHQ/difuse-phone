@@ -65,7 +65,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
 
-                  <androidx.appcompat.widget.AppCompatTextView
+                  <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/display_number"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -73,7 +73,8 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:scrollHorizontally="true"
-                    android:text="@{viewModel.digits}"
+                    android:background="@null"
+                    android:inputType="none"
                     android:textAlignment="center"
                     android:textColor="?attr/color_text"
                     android:textSize="56sp" />
@@ -260,7 +261,7 @@
                     android:background="@drawable/dialer_numpad_button_background"
                     android:contentDescription="@string/content_description_erase_last_input"
                     android:visibility="@{viewModel.digits.length() > 0 ? View.VISIBLE : View.INVISIBLE}"
-                    app:tint="@color/bc_white"
+                    app:tint="?attr/dialer_button_text"
                     app:layout_constraintWidth_max="@dimen/call_dtmf_button_max_width" />
 
                 <include

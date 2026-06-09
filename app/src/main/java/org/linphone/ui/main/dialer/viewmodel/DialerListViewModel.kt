@@ -70,6 +70,12 @@ class DialerListViewModel
     }
 
     @UiThread
+    fun setDigitsFromPaste(value: String) {
+        Log.i("$TAG Setting digits from paste [$value]")
+        digits.value = value
+    }
+
+    @UiThread
     fun onCallClicked() {
         val number = digits.value.orEmpty().trim()
         if (number.isEmpty()) {

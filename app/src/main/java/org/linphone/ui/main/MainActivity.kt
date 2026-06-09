@@ -24,6 +24,7 @@ import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -32,14 +33,13 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.WindowManager
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.UiThread
 import androidx.core.app.ActivityCompat
 import androidx.core.os.bundleOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.databinding.DataBindingUtil
@@ -104,7 +104,7 @@ class MainActivity : GenericActivity() {
 
     private var navigatedToDefaultFragment = false
 
-    private var pendingDefaultFragmentId = HISTORY_FRAGMENT_ID
+    private var pendingDefaultFragmentId = DIALER_FRAGMENT_ID
 
     private val destinationListener = object : NavController.OnDestinationChangedListener {
         override fun onDestinationChanged(
@@ -145,13 +145,16 @@ class MainActivity : GenericActivity() {
         // Must be done before the setContentView
         installSplashScreen()
 
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
-                true // Force dark mode to always have white icons in status bar
-            }
-        )
-
         super.onCreate(savedInstanceState)
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        controller.isAppearanceLightStatusBars = false
+        val nightModeFlags = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        controller.isAppearanceLightNavigationBars = nightModeFlags != Configuration.UI_MODE_NIGHT_YES
 
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity)
         binding.lifecycleOwner = this
@@ -414,7 +417,7 @@ class MainActivity : GenericActivity() {
                 MEETINGS_FRAGMENT_ID
             }
             else -> { // Default
-                HISTORY_FRAGMENT_ID
+                DIALER_FRAGMENT_ID
             }
         }
         getPreferences(MODE_PRIVATE).edit {
@@ -482,7 +485,7 @@ class MainActivity : GenericActivity() {
                     viewModel.mainIntentHandled = true
                     pendingDefaultFragmentId = getPreferences(MODE_PRIVATE).getInt(
                         DEFAULT_FRAGMENT_KEY,
-                        HISTORY_FRAGMENT_ID
+                        DIALER_FRAGMENT_ID
                     )
                     Log.i(
                         "$TAG Main intent first launch, deferring splash dismissal until account check is complete"
@@ -493,14 +496,14 @@ class MainActivity : GenericActivity() {
 
             val defaultFragmentId = getPreferences(MODE_PRIVATE).getInt(
                 DEFAULT_FRAGMENT_KEY,
-                HISTORY_FRAGMENT_ID
+                DIALER_FRAGMENT_ID
             )
             Log.i(
                 "$TAG Trying to navigate to set default destination [$defaultFragmentId]"
             )
             try {
                 val navOptionsBuilder = NavOptions.Builder()
-                navOptionsBuilder.setPopUpTo(R.id.historyListFragment, true)
+                navOptionsBuilder.setPopUpTo(R.id.dialerListFragment, true)
                 navOptionsBuilder.setLaunchSingleTop(true)
                 val navOptions = navOptionsBuilder.build()
                 val args = bundleOf()

@@ -24,6 +24,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,7 +36,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.launch
 import org.linphone.BR
-import org.linphone.LinphoneApplication.Companion.coreContext
 import org.linphone.R
 import org.linphone.core.tools.Log
 import org.linphone.databinding.ContactNewOrEditFragmentBinding
@@ -114,16 +114,13 @@ class NewContactFragment : GenericMainFragment() {
         observeToastEvents(viewModel)
 
         val addressToAdd = sharedViewModel.sipAddressToAddToNewContact
-        if (addressToAdd.isNotEmpty()) {
-            Log.i("$TAG Pre-filling new contact form with SIP address [$addressToAdd]")
-            sharedViewModel.sipAddressToAddToNewContact = ""
+        sharedViewModel.sipAddressToAddToNewContact = ""
 
-            coreContext.postOnCoreThread {
-                viewModel.addSipAddress(addressToAdd)
-            }
+        if (addressToAdd.isNotEmpty()) {
+            Log.i("$TAG Pre-filling new contact form with phone number [$addressToAdd]")
         }
 
-        viewModel.findFriendByRefKey("")
+        viewModel.findFriendByRefKey("", "", addressToAdd)
 
         binding.setBackClickListener {
             showAbortConfirmationDialogIfNeededOrGoBack()
@@ -201,7 +198,12 @@ class NewContactFragment : GenericMainFragment() {
         cellBinding.setVariable(BR.model, model)
         cellBinding.lifecycleOwner = (requireActivity() as MainActivity)
 
-        parent.addView(cellBinding.root)
+        val root = cellBinding.root
+        root.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        parent.addView(root)
     }
 
     private fun removeCell(model: NewOrEditNumberOrAddressModel) {

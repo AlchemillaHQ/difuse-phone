@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:textSize="28sp"
             android:includeFontPadding="false"
-            android:textColor="@color/bc_white"
+            android:textColor="?attr/dialer_button_text"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"

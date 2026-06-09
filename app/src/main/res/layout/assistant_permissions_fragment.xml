@@ -35,7 +35,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
-        android:background="?attr/color_main2_000">
+        android:background="?attr/color_background_contrast_in_dark_mode">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_nav_graph"
-    app:startDestination="@id/historyListFragment">
+    app:startDestination="@id/dialerListFragment">
 
     <fragment
         android:id="@+id/contactsListFragment"
@@ -14,25 +14,25 @@
             android:id="@+id/action_contactsListFragment_to_historyListFragment"
             app:destination="@id/historyListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/contactsListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_contactsListFragment_to_conversationsListFragment"
             app:destination="@id/conversationsListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/contactsListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_contactsListFragment_to_meetingsListFragment"
             app:destination="@id/meetingsListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/contactsListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_contactsListFragment_to_dialerListFragment"
             app:destination="@id/dialerListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/contactsListFragment"
+            app:popUpTo="@id/dialerListFragment"
             app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_contactsListFragment_to_newContactFragment"
@@ -51,25 +51,25 @@
             android:id="@+id/action_historyListFragment_to_contactsListFragment"
             app:destination="@id/contactsListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/historyListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_historyListFragment_to_conversationsListFragment"
             app:destination="@id/conversationsListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/historyListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_historyListFragment_to_meetingsListFragment"
             app:destination="@id/meetingsListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/historyListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_historyListFragment_to_dialerListFragment"
             app:destination="@id/dialerListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/historyListFragment"
+            app:popUpTo="@id/dialerListFragment"
             app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_historyListFragment_to_startCallFragment"
@@ -95,25 +95,25 @@
             app:destination="@id/contactsListFragment"
             app:launchSingleTop="true"
             app:popUpTo="@id/dialerListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_dialerListFragment_to_historyListFragment"
             app:destination="@id/historyListFragment"
             app:launchSingleTop="true"
             app:popUpTo="@id/dialerListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_dialerListFragment_to_conversationsListFragment"
             app:destination="@id/conversationsListFragment"
             app:launchSingleTop="true"
             app:popUpTo="@id/dialerListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_dialerListFragment_to_meetingsListFragment"
             app:destination="@id/meetingsListFragment"
             app:launchSingleTop="true"
             app:popUpTo="@id/dialerListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpToInclusive="false" />
     </fragment>
 
     <fragment
@@ -300,25 +300,25 @@
             android:id="@+id/action_conversationsListFragment_to_historyListFragment"
             app:destination="@id/historyListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/conversationsListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_conversationsListFragment_to_contactsListFragment"
             app:destination="@id/contactsListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/conversationsListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_conversationsListFragment_to_meetingsListFragment"
             app:destination="@id/meetingsListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/conversationsListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_conversationsListFragment_to_dialerListFragment"
             app:destination="@id/dialerListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/conversationsListFragment"
+            app:popUpTo="@id/dialerListFragment"
             app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_conversationsListFragment_to_startConversationFragment"
@@ -355,25 +355,25 @@
             android:id="@+id/action_meetingsListFragment_to_historyListFragment"
             app:destination="@id/historyListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/meetingsListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_meetingsListFragment_to_conversationsListFragment"
             app:destination="@id/conversationsListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/meetingsListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_meetingsListFragment_to_contactsListFragment"
             app:destination="@id/contactsListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/meetingsListFragment"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/dialerListFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_meetingsListFragment_to_dialerListFragment"
             app:destination="@id/dialerListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@id/meetingsListFragment"
+            app:popUpTo="@id/dialerListFragment"
             app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_meetingsListFragment_to_scheduleMeetingFragment"

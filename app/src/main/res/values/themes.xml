@@ -5,22 +5,18 @@
         <item name="postSplashScreenTheme">@style/Theme.Linphone</item>
     </style>
 
-    <!-- Base application theme. -->
     <style name="Theme.Linphone" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- https://developer.android.com/guide/topics/display-cutout#best_practices_for_display_cutout_support -->
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
-        <!-- Customize your theme here. -->
         <item name="android:windowActivityTransitions">true</item>
         <item name="android:windowBackground">@color/bc_white</item>
-        <item name="android:statusBarColor">?attr/color_main1_500</item>
 
-        <item name="color_main1_100">@color/orange_main_100</item>
-        <item name="color_main1_100_alpha_50">@color/orange_main_100_alpha_50</item>
-        <item name="color_main1_300">@color/orange_main_300</item>
-        <item name="color_main1_500">@color/orange_main_500</item>
-        <item name="color_main1_700">@color/orange_main_700</item>
+        <item name="color_main1_100">@color/difuse_main_100</item>
+        <item name="color_main1_100_alpha_50">@color/difuse_main_100_alpha_50</item>
+        <item name="color_main1_300">@color/difuse_main_300</item>
+        <item name="color_main1_500">@color/difuse_main_500</item>
+        <item name="color_main1_700">@color/difuse_main_700</item>
 
-        <item name="color_main2_000">@color/bc_white</item>
+        <item name="color_main2_000">@color/gray_main2_200</item>
         <item name="color_main2_100">@color/gray_main2_100</item>
         <item name="color_main2_200">@color/gray_main2_200</item>
         <item name="color_main2_300">@color/gray_main2_300</item>
@@ -56,7 +52,7 @@
         <item name="color_on_main">@color/bc_white</item>
         <item name="color_background_contrast_in_dark_mode">@color/bc_white</item>
         <item name="color_separator">@color/gray_main2_200</item>
-        <item name="color_text">@color/gray_main2_600</item>
+        <item name="color_text">@color/gray_main2_700</item>
         <item name="color_hint_text">@color/gray_main2_400</item>
 
         <item name="color_text_field_background">@color/gray_100</item>
@@ -64,7 +60,7 @@
         <item name="color_avatar_text">@color/gray_main2_600</item>
 
         <item name="color_chat_bubble_incoming">@color/gray_main2_100</item>
-        <item name="color_chat_bubble_outgoing">@color/orange_main_100</item>
+        <item name="color_chat_bubble_outgoing">@color/difuse_main_100</item>
         <item name="color_chat_bubble_reply">@color/gray_200</item>
         <item name="color_chat_bubble_file">@color/gray_main2_200</item>
 
@@ -83,6 +79,11 @@
 
         <item name="color_bottom_sheet_handle">@color/gray_main2_300</item>
         <item name="color_bottom_sheet_background">@color/gray_100</item>
+
+        <item name="dialer_button_normal">@color/dialer_button_normal</item>
+        <item name="dialer_button_pressed">@color/dialer_button_pressed</item>
+        <item name="dialer_button_text">@color/dialer_button_text</item>
+        <item name="dialer_button_letters">@color/dialer_button_letters</item>
     </style>
 
     <style name="Theme.LinphoneYellow" parent="Theme.Linphone">
@@ -139,16 +140,8 @@
         <item name="color_chat_bubble_outgoing">@color/purple_main_100</item>
     </style>
 
-    <style name="Theme.LinphoneDifuse" parent="Theme.Linphone">
-        <item name="color_main1_100">@color/difuse_main_100</item>
-        <item name="color_main1_100_alpha_50">@color/difuse_main_100_alpha_50</item>
-        <item name="color_main1_300">@color/difuse_main_300</item>
-        <item name="color_main1_500">@color/difuse_main_500</item>
-        <item name="color_main1_700">@color/difuse_main_700</item>
-        <item name="color_chat_bubble_outgoing">@color/difuse_main_100</item>
-    </style>
+    <style name="Theme.LinphoneDifuse" parent="Theme.Linphone" />
 
-    <!-- In-call application theme. -->
     <style name="Theme.LinphoneInCall" parent="Theme.Linphone">
         <item name="android:windowBackground">@color/gray_600</item>
     </style>

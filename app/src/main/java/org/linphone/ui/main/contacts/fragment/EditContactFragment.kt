@@ -24,6 +24,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -199,7 +200,12 @@ class EditContactFragment : SlidingPaneChildFragment() {
         cellBinding.setVariable(BR.model, model)
         cellBinding.lifecycleOwner = (requireActivity() as MainActivity)
 
-        parent.addView(cellBinding.root)
+        val root = cellBinding.root
+        root.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        parent.addView(root)
     }
 
     private fun removeCell(model: NewOrEditNumberOrAddressModel) {

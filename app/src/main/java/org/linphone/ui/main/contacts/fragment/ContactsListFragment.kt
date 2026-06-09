@@ -228,6 +228,17 @@ class ContactsListFragment : AbstractMainFragment() {
             }
         }
 
+        if (sharedViewModel.sipAddressToAddToNewContact.isNotEmpty()) {
+            Log.i("$TAG Found pending pre-fill address, opening new contact form")
+            binding.root.post {
+                if (findNavController().currentDestination?.id == R.id.contactsListFragment) {
+                    val action =
+                        ContactsListFragmentDirections.actionContactsListFragmentToNewContactFragment()
+                    findNavController().navigate(action)
+                }
+            }
+        }
+
         sharedViewModel.forceRefreshContactsList.observe(viewLifecycleOwner) {
             it.consume {
                 listViewModel.filter()

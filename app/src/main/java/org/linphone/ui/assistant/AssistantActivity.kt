@@ -23,10 +23,10 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.ViewGroup
 import androidx.activity.addCallback
-import androidx.activity.enableEdgeToEdge
 import androidx.annotation.UiThread
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnPreDraw
 import androidx.core.view.updatePadding
@@ -53,8 +53,15 @@ class AssistantActivity : GenericActivity() {
     private lateinit var binding: AssistantActivityBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        val nightMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        controller.isAppearanceLightStatusBars = nightMode != android.content.res.Configuration.UI_MODE_NIGHT_YES
+        controller.isAppearanceLightNavigationBars = nightMode != android.content.res.Configuration.UI_MODE_NIGHT_YES
 
         binding = DataBindingUtil.setContentView(this, R.layout.assistant_activity)
         binding.lifecycleOwner = this

@@ -80,5 +80,10 @@
 
         <attr name="color_bottom_sheet_handle" format="color"/>
         <attr name="color_bottom_sheet_background" format="color"/>
+
+        <attr name="dialer_button_normal" format="color"/>
+        <attr name="dialer_button_pressed" format="color"/>
+        <attr name="dialer_button_text" format="color"/>
+        <attr name="dialer_button_letters" format="color"/>
     </declare-styleable>
 </resources>

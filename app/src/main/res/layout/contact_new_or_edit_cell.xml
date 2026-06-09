@@ -23,7 +23,7 @@
             android:layout_height="50dp"
             android:layout_marginTop="5dp"
             android:paddingStart="20dp"
-            android:paddingEnd="20dp"
+            android:paddingEnd="50dp"
             android:text="@={model.value}"
             android:textSize="14sp"
             android:textColor="?attr/color_main2_600"
@@ -34,7 +34,7 @@
             app:layout_constraintWidth_max="@dimen/text_input_max_width"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/remove"/>
+            app:layout_constraintEnd_toEndOf="parent"/>
 
         <ImageView
             android:onClick="@{() -> model.remove()}"
@@ -43,13 +43,12 @@
             android:layout_width="@dimen/large_icon_size"
             android:layout_height="@dimen/large_icon_size"
             android:padding="5dp"
-            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
             android:src="@drawable/x"
             android:background="@drawable/squircle_transparent_button_background"
             android:contentDescription="@string/content_description_contact_remove_field"
             app:tint="?attr/color_main2_700"
-            app:layout_constraintStart_toEndOf="@id/field"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/field"
             app:layout_constraintTop_toTopOf="@id/field"
             app:layout_constraintBottom_toBottomOf="@id/field"/>
 

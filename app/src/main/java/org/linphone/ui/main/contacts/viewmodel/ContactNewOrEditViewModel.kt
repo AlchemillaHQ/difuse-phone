@@ -90,7 +90,7 @@ class ContactNewOrEditViewModel
     }
 
     @UiThread
-    fun findFriendByRefKey(refKey: String?) {
+    fun findFriendByRefKey(refKey: String?, prefillAddress: String = "", prefillPhoneNumber: String = "") {
         reset()
 
         coreContext.postOnCoreThread { core ->
@@ -132,8 +132,19 @@ class ContactNewOrEditViewModel
                 Log.e("$TAG No friend found using ref key [$refKey]")
             }
 
-            addSipAddress()
-            addPhoneNumber()
+            if (prefillAddress.isNotEmpty()) {
+                Log.i("$TAG Pre-filling with SIP address [$prefillAddress]")
+                addSipAddress(prefillAddress)
+            } else {
+                addSipAddress()
+            }
+
+            if (prefillPhoneNumber.isNotEmpty()) {
+                Log.i("$TAG Pre-filling with phone number [$prefillPhoneNumber]")
+                addPhoneNumber(prefillPhoneNumber)
+            } else {
+                addPhoneNumber()
+            }
 
             friendFoundEvent.postValue(Event(exists))
         }
@@ -280,9 +291,8 @@ class ContactNewOrEditViewModel
                 }
             }
         }, { model ->
-            coreContext.postOnCoreThread {
-                removeModel(model)
-            }
+            model.value.postValue("")
+            model.showRemoveButton.postValue(false)
         })
         sipAddresses.add(newModel)
 
@@ -304,9 +314,8 @@ class ContactNewOrEditViewModel
                 }
             }
         }, { model ->
-            coreContext.postOnCoreThread {
-                removeModel(model)
-            }
+            model.value.postValue("")
+            model.showRemoveButton.postValue(false)
         })
         phoneNumbers.add(newModel)
 
