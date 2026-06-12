@@ -1,44 +1,20 @@
+# Difuse Phone
 
-[![pipeline status](https://gitlab.linphone.org/BC/public/linphone-android/badges/master/pipeline.svg)](https://gitlab.linphone.org/BC/public/linphone-android/commits/master) 
-[![weblate status](https://weblate.linphone.org/widget/linphone/linphone-android-6-0/status-badge.png)](https://weblate.linphone.org/engage/linphone/)
+**Difuse Phone** is a fork of [linphone-android](https://github.com/BelledonneCommunications/linphone-android) by **Alchemilla Ventures** & **Difuse** (Iridia Solutions Private Limited), tailored difuse's and other SIP infrastructure. It is fully SIP-based, for all calling and presence features.
 
-Linphone is an open source softphone for voice and video over IP calling and instant messaging.
+### About
 
-It is fully SIP-based, for all calling, presence and IM features.
+**ML-Powered QR Scanner** — The upstream linphone QR scanner is replaced with a Google ML Kit + CameraX barcode scanner. QR codes encode JSON blobs containing PBX credentials (username, password, host, transport), allowing one-tap device provisioning.
 
-General description is available from [linphone web site](https://linphone.org).
+**Sentry — Go-Based Push & B2BUA Backend** — The most significant architectural addition is Sentry, a production Go service that acts as a SIP Back-to-Back User Agent. Built with `sipgo`, Gin, and PostgreSQL (via SQLC), Sentry bridges upstream PBX systems (Difuse PBX, Asterisk, FreeSWITCH) to mobile devices via FCM/APNs push — **all push events are handled with sub-millisecond latency**. It handles SIP registration on behalf of sleeping devices, dispatches wake-up pushes, bridges calls, and exposes a REST API for interaction with the Difuse Phone. The Android app registers with Sentry on startup, maintains heartbeats, and manages dual SIP accounts — a direct PBX account for calls and a hidden "push-only" B2BUA account for incoming call wake-up.
 
-### How to get it
-
-[<img src="metadata/google-play-badge.png" height="60" alt="Get it on Google Play">](https://play.google.com/store/apps/details?id=org.linphone)[<img src="metadata/f-droid-badge.png" height="60" alt="Get it on F-Droid">](https://f-droid.org/en/packages/org.linphone/)
-
-You can also download APKs signed with our key from [our website](https://download.linphone.org/releases/android/?C=M;O=D).
+**Optimized for Calling** — The experience is streamlined for voice and video calling with a custom dialer, a refined "difuse" blue UI theme, and pre-configured third-party SIP login that gets users connected faster.
 
 ### License
 
-Copyright © Belledonne Communications
+Copyright © Belledonne Communications / Alchemilla Ventures Private Limited
 
-Linphone is dual licensed, and is available either :
-
- - under a [GNU/GPLv3 license](https://www.gnu.org/licenses/gpl-3.0.en.html), for free (open source). Please make sure that you understand and agree with the terms  of this license before using it (see LICENSE file for details).
-
- - under a proprietary license, for a fee, to be used in closed source applications. Contact [Belledonne Communications](https://linphone.org/contact) for any question about costs and services.
-
-### Documentation
-
-- Supported features and RFCs : https://www.linphone.org/linphone-softphone/#linphone-fonctionnalites
-
-- Linphone public wiki : https://wiki.linphone.org/xwiki/wiki/public/view/Linphone/
-
-- Tutorials : https://gitlab.linphone.org/BC/public/tutorials/-/tree/master/android/kotlin
-
-# What's new
-
-6.0.0 release is a completely new version, designed with UX/UI experts and marks a turning point in design, features, and user experience. The improvements make this version smoother and simpler for both developers and users.
-
-You can take a look at the [CHANGELOG.md](CHANGELOG.md) file for a non-exhaustive list of changes of this new version and of the newly added features, the most exciting ones being the improved fluidity, a real multi-accounts support and asymmetrical video in calls.
-
-This release only works on Android OS 9.0 and newer.
+Difuse Phone is available under a [GNU/GPLv3 license](https://www.gnu.org/licenses/gpl-3.0.en.html) (see LICENSE file for details).
 
 # Building the app
 
@@ -63,7 +39,7 @@ This is to be able to include native libraries symbols into app bundle for the P
 
 ## Building a local SDK
 
-1. Clone the linphone-sdk repository from out gitlab:
+1. Clone the linphone-sdk repository:
 ```
 git clone https://gitlab.linphone.org/BC/public/linphone-sdk.git --recursive
 ```
@@ -104,19 +80,18 @@ Also check you have built the SDK for the right CPU architecture using the `-DLI
 
 ### Behavior issue
 
-When submitting an issue on our [Github repository](https://github.com/BelledonneCommunications/linphone-android), please follow the template and attach the matching library logs.
-
-Starting 6.0.0 release, logs are always enabled and stored locally on the device, you can clear them/upload them securely on our server for sharing by going into the Help → Troubleshooting page.
+When submitting an issue, please include the matching library logs.  
+Logs are always enabled and stored locally on the device, you can clear them/upload them by going into the Help → Troubleshooting page.
 
 ### Native crash
 
 First of all, to be able to get a symbolized stack trace, you need the debug version of our libraries.
 
-If you haven't built the SDK locally (see [building a local SDK](#BuildingalocalSDK)), here's how to get them:
+If you haven't built the SDK locally (see [building a local SDK](#building-a-local-sdk)), here's how to get them:
 
-1. Go to our [maven repository](https://download.linphone.org/maven_repository/org/linphone/linphone-sdk-android/) and find the directory that matches the version of our SDK that crashed.
+1. Go to the [linphone maven repository](https://download.linphone.org/maven_repository/org/linphone/linphone-sdk-android/) and find the directory that matches the version of the SDK.
 
-2. Download the linphone-sdk-android-<version>-libs-debug.zip archive.
+2. Download the linphone-sdk-android-\<version\>-libs-debug.zip archive.
 
 3. Extract the symbolized libraries somewhere on your computer, it will create a ```libs-debug``` directory.
 
@@ -125,7 +100,7 @@ If your computer isn't used for Android development, you can download those tool
 
 Once you have the debug libraries and the proper tools installed, you can use the ```ndk-stack``` tool to symbolize your stacktrace. Note that you also need to know the architecture (armv7, arm64, x86, etc...) of the libraries that were used.
 
-If you know the CPU architecture of your device (most probably arm64 if it's a recent device) you can use the following to get the stacktrace from a device plugged to a computer:
+If you know the CPU architecture of your device (most probably arm64 if it's a recent device) you can use the following to get the stacktrace:
 ```
 adb logcat -d | ndk-stack -sym ./libs-debug/arm64-v8a/
 ```
@@ -137,12 +112,10 @@ Warning: This command won't print anything until you reproduce the crash!
 
 Starting [NDK r29](https://github.com/android/ndk/wiki/Changelog-r29) you will be able to directly use the ```libs-debug.zip``` file in ```ndk-stack -sym``` argument.
 
-## Create an APK with a different package name
+## Firebase push notifications
 
-Simply edit the ```app/build.gradle.kts``` file and change the value of the ```packageName``` variable.
-The next build will automatically use this value everywhere thanks to ```manifestPlaceholders``` feature of gradle and Android.
-
-We no longer build the debug flavor with a different package name, but if you still want that behavior you only have to change the value of ```useDifferentPackageNameForDebugBuild``` to ```true```. When enabled, app built and installed by Android studio will have ```org.linphone.debug``` package name instead of ```org.linphone```.
+Firebase push notifications require a ```app/google-services.json``` file that contains the configuration.  
+If you have your own push server, replace this file with yours.
 
 If you encounter
 ```
@@ -150,33 +123,8 @@ Execution failed for task ':app:processDebugGoogleServices'.
 > No matching client found for package name 'your package name'
 ```
 error when building, make sure you have replaced the ```app/google-services.json``` file by yours (containing your package name).
-If you don't have such file because you don't rely on Firebase Cloud Messaging features nor Crashlytics, delete the file instead.
 
-## Firebase push notifications
+## Create an APK with a different package name
 
-Now that Google Cloud Messaging has been deprecated and will be completely removed on April 11th 2019, the only official way of using push notifications is through Firebase.
-
-However to make Firebase push notifications work, the project needs to have a ```app/google-services.json``` file that contains the configuration.  
-We have archived our own, so you can build your linphone-android application and still receive push notifications from our free SIP service (sip.linphone.org).
-If you delete it, you won't receive any push notification.
-
-If you have your own push server, replace this file by yours.
-
-## Translations
-
-We no longer use transifex for the translation process, instead we have deployed our own instance of [Weblate](https://weblate.linphone.org/).
-
-Due to the full app rewrite we can't re-use previous translations, so we'll be very happy if you want to contribute.
-
-<a href="https://weblate.linphone.org/engage/linphone/">
-<img src="https://weblate.linphone.org/widget/linphone/linphone-android-6-0/multi-auto.svg" alt="Translation status" />
-</a>
-
-# CONTRIBUTIONS
-
-In order to submit a patch for inclusion in linphone's source code:
-
-1. First make sure your patch applies to latest git sources before submitting: patches made to old versions can't and won't be merged.
-2. Fill out and send us an email with the link of pull-request and the [Contributor Agreement](https://linphone.org/sites/default/files/bc-contributor-agreement_0.pdf) for your patch to be included in the git tree.
-
-The goal of this agreement to grant us peaceful exercise of our rights on the linphone source code, while not losing your rights on your contribution.
+Simply edit the ```app/build.gradle.kts``` file and change the value of the ```packageName``` variable.
+The next build will automatically use this value everywhere thanks to ```manifestPlaceholders``` feature of gradle and Android.
