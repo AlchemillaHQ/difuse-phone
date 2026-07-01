@@ -35,9 +35,9 @@ class DifuseAlarmReceiver : BroadcastReceiver() {
         val action = intent.action
         Log.i("$TAG Heartbeat alarm fired, action=[$action]")
 
-        val deviceId = corePreferences.difuseDeviceId
-        if (deviceId.isEmpty()) {
-            Log.i("$TAG No Difuse device ID, skipping heartbeat check")
+        val deviceIdsJson = corePreferences.difuseAccountDeviceIds
+        if (deviceIdsJson.isEmpty() || deviceIdsJson == "{}") {
+            Log.i("$TAG No Difuse device IDs, skipping heartbeat check")
             return
         }
 

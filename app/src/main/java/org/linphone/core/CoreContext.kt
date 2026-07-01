@@ -1134,9 +1134,9 @@ class CoreContext
 
     @WorkerThread
     fun scheduleDifuseHeartbeat() {
-        val deviceId = corePreferences.difuseDeviceId
-        if (deviceId.isEmpty()) {
-            Log.i("$TAG No Difuse device ID, skipping heartbeat scheduling")
+        val deviceIds = getAllDifuseDeviceIds()
+        if (deviceIds.isEmpty()) {
+            Log.i("$TAG No Difuse device IDs, skipping heartbeat scheduling")
             return
         }
 
@@ -1157,7 +1157,7 @@ class CoreContext
             DIFUSE_HEARTBEAT_INTERVAL_MS,
             pendingIntent
         )
-        Log.i("$TAG Difuse heartbeat scheduled every 30 minutes for device [$deviceId]")
+        Log.i("$TAG Difuse heartbeat scheduled every 30 minutes for [${deviceIds.size}] device(s)")
     }
 
     @WorkerThread
@@ -1287,21 +1287,42 @@ class CoreContext
     }
 
     @WorkerThread
-    private fun refreshDifusePushTokenIfNeeded() {
-        val deviceId = corePreferences.difuseDeviceId
-        if (deviceId.isEmpty()) return
-        if (corePreferences.difuseB2buaSipUri.isEmpty()) return
+    private fun getAllDifuseDeviceIds(): List<String> {
+        return try {
+            val json = JSONObject(corePreferences.difuseAccountDeviceIds)
+            val ids = mutableListOf<String>()
+            for (key in json.keys()) {
+                val id = json.optString(key, "").trim()
+                if (id.isNotEmpty()) {
+                    ids.add(id)
+                }
+            }
+            ids
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 
+    @WorkerThread
+    private fun refreshDifusePushTokenIfNeeded() {
         val token = core.pushNotificationConfig?.prid.orEmpty().trim()
         if (token.isEmpty()) return
 
         val previousToken = corePreferences.difusePushToken
         if (token == previousToken) return
 
-        Log.i("$TAG Difuse push token changed, refreshing device registration")
-        DifuseApi.refreshDeviceAsync(deviceId, token) { success ->
-            if (success) {
-                corePreferences.difusePushToken = token
+        val deviceIds = getAllDifuseDeviceIds()
+        if (deviceIds.isEmpty()) return
+
+        Log.i("$TAG Difuse push token changed, refreshing [${deviceIds.size}] device(s)")
+        for (deviceId in deviceIds) {
+            DifuseApi.refreshDeviceAsync(deviceId, token) { success ->
+                if (success) {
+                    Log.i("$TAG Push token refreshed for device [$deviceId]")
+                    corePreferences.difusePushToken = token
+                } else {
+                    Log.w("$TAG Failed to refresh push token for device [$deviceId]")
+                }
             }
         }
     }
@@ -1313,70 +1334,81 @@ class CoreContext
 
     @WorkerThread
     private fun checkDifuseUpstreamRegistrationIfNeeded() {
-        val deviceId = corePreferences.difuseDeviceId
-        if (deviceId.isEmpty()) return
-        if (corePreferences.difuseB2buaSipUri.isEmpty()) return
+        val deviceIds = getAllDifuseDeviceIds()
+        if (deviceIds.isEmpty()) return
 
         val now = System.currentTimeMillis()
         if (now - lastDifuseStatusCheckTimestampMs < 60_000L) return
         if (!difuseStatusCheckInProgress.compareAndSet(false, true)) return
         lastDifuseStatusCheckTimestampMs = now
+
+        Log.i("$TAG Checking Difuse status for [${deviceIds.size}] device(s)")
+
+        val remaining = java.util.concurrent.atomic.AtomicInteger(deviceIds.size)
+        val onDeviceDone: () -> Unit = {
+            if (remaining.decrementAndGet() <= 0) {
+                difuseStatusCheckInProgress.set(false)
+            }
+        }
+
+        for (deviceId in deviceIds) {
+            checkSingleDeviceStatus(deviceId, onDeviceDone)
+        }
+    }
+
+    private fun checkSingleDeviceStatus(deviceId: String, onDone: () -> Unit) {
         Log.i("$TAG Checking Difuse status for device [$deviceId]")
 
         DifuseApi.getDeviceStatusAsync(deviceId) { status ->
             if (status == null) {
-                difuseStatusCheckInProgress.set(false)
+                onDone()
                 return@getDeviceStatusAsync
             }
 
             if (status.statusCode == 404) {
-                Log.w("$TAG Difuse status returned 404, attempting register fallback")
-                registerDeviceOnDifuseFromCurrentAccount(deviceId, "status_404") {
-                    difuseStatusCheckInProgress.set(false)
-                }
+                Log.w("$TAG Difuse status returned 404 for device [$deviceId], attempting register fallback")
+                registerDeviceOnDifuseFromCurrentAccount(deviceId, "status_404", onDone)
                 return@getDeviceStatusAsync
             }
 
             if (status.statusCode !in 200..299) {
-                Log.w("$TAG Difuse status check failed with status [${status.statusCode}] body [${status.responseBodySnippet}]")
-                difuseStatusCheckInProgress.set(false)
+                Log.w("$TAG Difuse status check failed for device [$deviceId] with status [${status.statusCode}]")
+                onDone()
                 return@getDeviceStatusAsync
             }
 
             if (status.disabled) {
-                Log.i("$TAG Difuse device is disabled, skipping upstream registration check")
-                difuseStatusCheckInProgress.set(false)
+                Log.i("$TAG Difuse device [$deviceId] is disabled, skipping upstream registration check")
+                onDone()
                 return@getDeviceStatusAsync
             }
 
             if (status.upstreamRegistered) {
-                difuseStatusCheckInProgress.set(false)
+                onDone()
                 return@getDeviceStatusAsync
             }
 
-            Log.w("$TAG Difuse reports upstream not registered, forcing reregister")
+            Log.w("$TAG Difuse reports upstream not registered for device [$deviceId], forcing reregister")
             DifuseApi.reregisterDeviceDetailedAsync(deviceId) { result ->
                 if (result == null) {
-                    Log.e("$TAG Difuse forced reregister request failed")
-                    difuseStatusCheckInProgress.set(false)
+                    Log.e("$TAG Difuse forced reregister request failed for device [$deviceId]")
+                    onDone()
                     return@reregisterDeviceDetailedAsync
                 }
 
                 if (result.success) {
-                    difuseStatusCheckInProgress.set(false)
+                    onDone()
                     return@reregisterDeviceDetailedAsync
                 }
 
                 if (result.statusCode == 404) {
-                    Log.w("$TAG Difuse reregister returned 404, attempting register fallback")
-                    registerDeviceOnDifuseFromCurrentAccount(deviceId, "reregister_404") {
-                        difuseStatusCheckInProgress.set(false)
-                    }
+                    Log.w("$TAG Difuse reregister returned 404 for device [$deviceId], attempting register fallback")
+                    registerDeviceOnDifuseFromCurrentAccount(deviceId, "reregister_404", onDone)
                     return@reregisterDeviceDetailedAsync
                 }
 
-                Log.e("$TAG Difuse forced reregister request failed with status [${result.statusCode}] body [${result.responseBodySnippet}]")
-                difuseStatusCheckInProgress.set(false)
+                Log.e("$TAG Difuse forced reregister request failed for device [$deviceId] with status [${result.statusCode}]")
+                onDone()
             }
         }
     }

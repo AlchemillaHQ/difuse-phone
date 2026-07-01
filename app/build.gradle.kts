@@ -37,7 +37,7 @@ if (crashlyticsAvailable) {
     println("Crashlytics has been disabled because either google-services.json file wasn't found or local Linphone SDK build folder isn't configured")
 }
 
-var gitVersion = "6.2.0"
+var gitVersion = "6.2.1"
 var gitBranch = ""
 try {
     val gitDescribe = ProcessBuilder()
@@ -106,8 +106,8 @@ android {
         applicationId = packageName
         minSdk = 28
         targetSdk = 36
-        versionCode = 602000 // 6.02.000
-        versionName = "6.2.0"
+        versionCode = 602001 // 6.02.001
+        versionName = "6.2.1"
 
         manifestPlaceholders["appAuthRedirectScheme"] = packageName
 
@@ -130,20 +130,22 @@ android {
     val keystoreProperties = Properties()
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 
-    signingConfigs {
-        create("release") {
-            val keyStorePath = keystoreProperties["storeFile"] as String
-            val keyStore = project.file(keyStorePath)
-            if (keyStore.exists()) {
+    val keyStorePath = keystoreProperties["storeFile"] as String
+    val keyStore = project.file(keyStorePath)
+    val hasReleaseKeystore = keyStore.exists()
+
+    if (hasReleaseKeystore) {
+        signingConfigs {
+            create("release") {
                 storeFile = keyStore
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
                 println("Signing config release is using keystore [$storeFile]")
-            } else {
-                println("Keystore [$storeFile] doesn't exists!")
             }
         }
+    } else {
+        println("Keystore [$keyStore] doesn't exist, release signing config skipped")
     }
 
     buildTypes {
@@ -183,7 +185,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = signingConfigs.getByName("release")
+            if (hasReleaseKeystore) {
+                signingConfig = signingConfigs.getByName("release")
+            }
 
             val appVersion = gitVersion
             val appBranch = gitBranch

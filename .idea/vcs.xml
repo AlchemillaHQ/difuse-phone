@@ -2,7 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/difuse-b2bua" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Sentry" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/flexisip" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/linphone-sdk" vcs="Git" />
   </component>

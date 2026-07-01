@@ -50,9 +50,9 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     private fun scheduleDifuseHeartbeatIfNeeded(context: Context) {
-        val deviceId = corePreferences.difuseDeviceId
-        if (deviceId.isEmpty()) {
-            Log.i("$TAG No Difuse device ID, skipping heartbeat scheduling on boot")
+        val deviceIdsJson = corePreferences.difuseAccountDeviceIds
+        if (deviceIdsJson.isEmpty() || deviceIdsJson == "{}") {
+            Log.i("$TAG No Difuse device IDs, skipping heartbeat scheduling on boot")
             return
         }
 
@@ -73,6 +73,6 @@ class BootReceiver : BroadcastReceiver() {
             DIFUSE_HEARTBEAT_INTERVAL_MS,
             pendingIntent
         )
-        Log.i("$TAG Difuse heartbeat re-scheduled on boot for device [$deviceId]")
+        Log.i("$TAG Difuse heartbeat re-scheduled on boot")
     }
 }
