@@ -1383,6 +1383,14 @@ class CoreContext
                 return@getDeviceStatusAsync
             }
 
+            if (status.dbExpired) {
+                Log.w("$TAG Difuse device expired in DB, forcing re-register")
+                registerDeviceOnDifuseFromCurrentAccount(deviceId, "db_expired") {
+                    difuseStatusCheckInProgress.set(false)
+                }
+                return@getDeviceStatusAsync
+            }
+
             if (status.upstreamRegistered) {
                 onDone()
                 return@getDeviceStatusAsync
